@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silverside — Svedka Credit Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0C0C0E;--surface:#131316;--raised:#1A1A1F;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#F0F0F2;--sub:#7A7A88;--muted:#3D3D4A;
+  --blue:#2E5BFF;--blue-dim:#1A3ADB;
+  --green:#22C97A;--amber:#F0A030;--red:#E84040;--purple:#8B60F8;--teal:#18C0A8;
+  --sans:'Geist',system-ui,sans-serif;--mono:'Geist Mono',monospace;
+}
+html{font-size:14px;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;min-height:100vh;}
+/* TOPBAR */
+.topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;position:sticky;top:0;z-index:100;}
+.topbar-logo{height:19px;width:auto;display:block;}
+.topbar-right{display:flex;align-items:center;gap:20px;}
+.client-label{font-family:var(--mono);font-size:11px;color:var(--sub);letter-spacing:0.07em;}
+.tier-pill{border:1px solid var(--border2);padding:4px 12px;font-family:var(--mono);font-size:10px;color:var(--sub);letter-spacing:0.06em;display:flex;align-items:center;gap:6px;}
+.tier-pill b{color:var(--text);font-weight:500;}
+/* NAV */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 32px;}
+.nav-tab{padding:14px 18px;font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;border-bottom:1px solid transparent;letter-spacing:0.07em;text-transform:uppercase;transition:color 0.15s;user-select:none;white-space:nowrap;}
+.nav-tab:hover{color:var(--sub);}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--blue);}
+/* LAYOUT */
+.page{max-width:1140px;margin:0 auto;padding:40px 32px;}
+.panel{display:none;}
+.panel.active{display:block;animation:up 0.18s ease;}
+@keyframes up{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.page-title{font-size:22px;font-weight:400;letter-spacing:-0.02em;margin-bottom:4px;}
+.page-sub{font-family:var(--mono);font-size:11px;color:var(--sub);letter-spacing:0.04em;}
+.title-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;}
+/* kpi styles removed */
+.track{height:2px;background:var(--raised);}
+.track-fill{height:100%;transition:width 0.5s cubic-bezier(.4,0,.2,1);}
+/* SECTION */
+.section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.section-title{font-family:var(--mono);font-size:11px;color:var(--sub);letter-spacing:0.09em;text-transform:uppercase;}
+/* workstream styles removed */
+
+/* ── OVERVIEW HERO ── */
+.ov-hero {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+.ov-pct-block {
+  background: var(--surface);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.ov-pct {
+  font-size: 56px;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.ov-pct-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+.ov-status {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+.ov-detail {
+  background: var(--surface);
+  padding: 24px 28px;
+}
+.ov-credit-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.ov-cr-block {
+  flex: 1;
+  padding: 0 16px;
+}
+.ov-cr-block:first-child { padding-left: 0; }
+.ov-cr-num {
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--text);
+}
+.ov-cr-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+.ov-cr-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 3px;
+}
+.ov-divider {
+  width: 1px;
+  height: 48px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* RULE */
+.rule{border:none;border-top:1px solid var(--border);margin:32px 0;}
+/* MONTH TOGGLE */
+.month-toggle-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.m-tabs{display:flex;}
+.m-tab{padding:8px 16px;font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;border:1px solid var(--border);margin-right:-1px;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.1s;user-select:none;position:relative;z-index:0;}
+.m-tab.active{background:var(--blue);color:#fff;border-color:var(--blue);z-index:1;}
+.m-tab:not(.active):hover{color:var(--sub);}
+.month-card{border:1px solid var(--border);margin-top:-1px;background:var(--surface);}
+.month-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border);}
+.month-kpi{background:var(--surface);padding:18px 20px;}
+.month-kpi-label{font-family:var(--mono);font-size:10px;color:var(--sub);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
+.month-kpi-val{font-size:28px;font-weight:300;letter-spacing:-0.03em;}
+.month-kpi-val.blue{color:var(--blue);}.month-kpi-val.green{color:var(--green);}.month-kpi-val.amber{color:var(--amber);}.month-kpi-val.red{color:var(--red);}
+.month-col-hdr{display:grid;grid-template-columns:1fr 180px 70px 80px 90px 70px;gap:12px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--raised);}
+.month-col-hdr span{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;}
+.month-proj-row{display:grid;grid-template-columns:1fr 180px 70px 80px 90px 70px;gap:12px;padding:13px 20px;border-bottom:1px solid var(--border);font-size:13px;align-items:center;}
+.month-proj-row:last-child{border-bottom:none;}
+.month-empty{padding:40px 20px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted);}
+/* PROJECTS TABLE */
+.proj-hdr{display:grid;grid-template-columns:1fr 200px 130px 72px 88px 90px 80px 28px;gap:12px;padding:10px 20px;border:1px solid var(--border);background:var(--raised);}
+.proj-hdr span{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;}
+.proj-list-wrap{border:1px solid var(--border);border-top:none;}
+.proj-row{display:grid;grid-template-columns:1fr 200px 130px 72px 88px 90px 80px 28px;gap:12px;padding:13px 20px;border-bottom:1px solid var(--border);font-size:13px;align-items:center;transition:background 0.1s;}
+.proj-row:last-child{border-bottom:none;}
+.proj-row:hover{background:var(--raised);}
+.proj-name{font-weight:400;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.proj-month-tag{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;}
+.proj-deliv{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.proj-ws{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.proj-del{color:var(--muted);cursor:pointer;font-size:16px;text-align:center;transition:color 0.1s;line-height:1;}
+.proj-del:hover{color:var(--red);}
+.proj-empty{padding:56px 20px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--border);border-top:none;}
+/* STATUS TAGS */
+.tag{display:inline-block;padding:3px 8px;font-family:var(--mono);font-size:10px;letter-spacing:0.04em;text-transform:uppercase;border:1px solid;white-space:nowrap;}
+.tag-active{color:var(--green);border-color:rgba(34,201,122,0.3);}
+.tag-pending{color:var(--amber);border-color:rgba(240,160,48,0.3);}
+.tag-done{color:var(--muted);border-color:var(--border);}
+.tag-hold{color:var(--red);border-color:rgba(232,64,64,0.3);}
+/* GANTT */
+.gantt-wrap{border:1px solid var(--border);overflow-x:auto;}
+.gantt-head{display:flex;border-bottom:1px solid var(--border);background:var(--raised);}
+.gantt-label-cell{width:220px;min-width:220px;padding:10px 20px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;border-right:1px solid var(--border);flex-shrink:0;}
+.gantt-months{flex:1;display:grid;grid-template-columns:repeat(6,1fr);min-width:480px;}
+.gantt-month-hdr{padding:10px 0;text-align:center;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;border-right:1px solid var(--border);}
+.gantt-month-hdr:last-child{border-right:none;}
+.gantt-body{min-width:700px;}
+.gantt-row{display:flex;border-bottom:1px solid var(--border);min-height:48px;}
+.gantt-row:last-child{border-bottom:none;}
+.gantt-task{width:220px;min-width:220px;padding:10px 20px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;flex-shrink:0;}
+.gantt-task-name{font-size:12px;color:var(--text);}
+.gantt-task-meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;}
+.gantt-bars{flex:1;position:relative;display:grid;grid-template-columns:repeat(6,1fr);min-width:480px;}
+.gantt-cell{border-right:1px solid var(--border);}
+.gantt-cell:last-child{border-right:none;}
+.gantt-bar-layer{position:absolute;inset:0;pointer-events:none;}
+.gantt-bar{position:absolute;height:20px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:9px;letter-spacing:0.02em;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;pointer-events:all;}
+.gantt-bar:hover{opacity:0.75;}
+.gantt-empty{padding:48px 20px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted);}
+.gantt-legend{display:flex;flex-wrap:wrap;gap:20px;padding:14px 20px;border-top:1px solid var(--border);background:var(--raised);}
+.gantt-legend-item{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;color:var(--sub);}
+.legend-sw{width:16px;height:6px;}
+/* MENU */
+.menu-cat{margin-bottom:36px;}
+.menu-cat-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid var(--border);display:block;}
+.menu-row{display:grid;grid-template-columns:1fr 110px 60px;gap:16px;align-items:start;padding:13px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.menu-row:last-child{border-bottom:none;}
+.menu-row:hover .menu-item-name{color:var(--blue);}
+.menu-item-name{font-size:13px;color:var(--text);transition:color 0.12s;}
+.menu-item-detail{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;}
+.menu-item-note{font-family:var(--mono);font-size:10px;color:var(--purple);margin-top:3px;line-height:1.5;}
+.menu-cr{font-size:26px;font-weight:300;letter-spacing:-0.03em;text-align:right;color:var(--text);}
+.menu-val{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;margin-top:3px;}
+.menu-add-btn{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;padding-top:6px;}
+.menu-row:hover .menu-add-btn{color:var(--blue);}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;border:none;white-space:nowrap;}
+.btn-primary{background:var(--blue);color:#fff;}.btn-primary:hover{background:var(--blue-dim);}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--sub);}.btn-outline:hover{border-color:var(--text);color:var(--text);}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.18s;}
+.modal-bg.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border2);width:660px;max-width:96vw;max-height:92vh;overflow-y:auto;transform:translateY(10px);transition:transform 0.2s;}
+.modal-bg.open .modal{transform:translateY(0);}
+.modal-head{padding:22px 28px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--surface);z-index:10;}
+.modal-title{font-size:16px;font-weight:400;letter-spacing:-0.01em;}
+.modal-body{padding:24px 28px;}
+.modal-foot{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:var(--surface);}
+/* FORM */
+.field{margin-bottom:16px;}
+.field-label{display:block;font-family:var(--mono);font-size:10px;color:var(--sub);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:7px;}
+.field-hint{color:var(--muted);text-transform:none;letter-spacing:0;font-size:10px;margin-left:6px;}
+.field-input,.field-select{width:100%;padding:10px 12px;background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:13px;font-weight:300;outline:none;transition:border-color 0.15s;appearance:none;}
+.field-input:focus,.field-select:focus{border-color:var(--border2);}
+.field-input::placeholder{color:var(--muted);}
+.field-select option{background:var(--surface);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.err-field{border-color:var(--red)!important;}
+.modal-section-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin:20px 0 14px;padding-top:20px;border-top:1px solid var(--border);display:block;}
+/* ADDONS */
+.addon-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.addon-item{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:var(--raised);border:1px solid var(--border);cursor:pointer;transition:border-color 0.12s;user-select:none;}
+.addon-item:hover{border-color:var(--border2);}
+.addon-item.sel{border-color:var(--blue);background:rgba(46,91,255,0.08);}
+.addon-cb{width:14px;height:14px;min-width:14px;border:1px solid var(--muted);display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all 0.12s;flex-shrink:0;}
+.addon-item.sel .addon-cb{background:var(--blue);border-color:var(--blue);}
+.addon-tick{color:#fff;font-size:9px;line-height:1;display:none;}
+.addon-item.sel .addon-tick{display:block;}
+.addon-name{font-size:12px;color:var(--text);line-height:1.3;}
+.addon-note{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4;}
+.addon-cr{font-family:var(--mono);font-size:11px;color:var(--sub);margin-left:auto;white-space:nowrap;padding-top:1px;padding-left:8px;}
+/* DELIV NOTE */
+.deliv-note{font-family:var(--mono);font-size:11px;color:var(--purple);padding:9px 12px;border-left:2px solid var(--purple);background:rgba(139,96,248,0.06);line-height:1.5;margin-bottom:16px;display:none;}
+/* RUSH NOTE */
+.rush-note{background:rgba(240,160,48,0.06);border:1px solid rgba(240,160,48,0.2);padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--amber);margin-bottom:14px;display:none;}
+/* CREDIT PREVIEW */
+.credit-preview{background:var(--raised);border:1px solid var(--border);padding:18px 20px;display:flex;align-items:flex-start;gap:20px;margin-top:4px;}
+.cp-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
+.cp-meta{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:5px;}
+.cp-credits{font-size:44px;font-weight:300;letter-spacing:-0.04em;line-height:1;color:var(--text);}
+.cp-credits.over{color:var(--red);}
+.cp-right{text-align:right;flex-shrink:0;}
+.cp-val{font-family:var(--mono);font-size:11px;color:var(--sub);margin-top:4px;}
+.cp-rem{font-family:var(--mono);font-size:11px;margin-top:3px;color:var(--green);}
+.cp-rem.warn{color:var(--amber);}.cp-rem.over{color:var(--red);}
+.bd-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--sub);padding:3px 0;}
+.bd-row.tot{color:var(--text);border-top:1px solid var(--border);margin-top:6px;padding-top:8px;font-weight:500;}
+
+/* GANTT WEEKLY */
+.gantt-head{display:flex;border-bottom:1px solid var(--border);background:var(--raised);}
+.gantt-head2{display:flex;border-bottom:2px solid var(--border2);}
+.gantt-label-cell{width:220px;min-width:220px;padding:10px 20px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;border-right:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;}
+.gantt-label-cell2{width:220px;min-width:220px;border-right:1px solid var(--border);flex-shrink:0;background:var(--raised);}
+.gantt-week-grid{flex:1;display:grid;grid-template-columns:repeat(24,1fr);min-width:720px;}
+.gantt-week-row{flex:1;min-width:720px;display:grid;grid-template-columns:repeat(24,1fr);}
+.gantt-mgroup{padding:8px 0;text-align:center;font-family:var(--mono);font-size:10px;color:var(--sub);letter-spacing:0.07em;text-transform:uppercase;border-right:1px solid var(--border2);border-bottom:1px solid var(--border);}
+.gantt-mgroup:last-child{border-right:none;}
+.gantt-whdr{padding:6px 0;text-align:center;font-family:var(--mono);font-size:9px;color:var(--muted);border-right:1px solid var(--border);background:var(--raised);}
+.gantt-whdr:last-child{border-right:none;}
+.gantt-cell{border-right:1px solid rgba(255,255,255,0.04);}
+.gantt-cell-month{border-right:1px solid var(--border)!important;}
+.gantt-bars{flex:1;position:relative;min-width:720px;}
+.gantt-row{display:flex;border-bottom:1px solid var(--border);min-height:48px;}
+.gantt-row:last-child{border-bottom:none;}
+.gantt-task{width:220px;min-width:220px;padding:10px 20px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;flex-shrink:0;}
+.gantt-task-name{font-size:12px;color:var(--text);}
+.gantt-task-meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;}
+.gantt-bar-layer{position:absolute;inset:0;pointer-events:none;}
+.gantt-bar{position:absolute;height:20px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:9px;letter-spacing:0.02em;display:flex;align-items:center;padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;pointer-events:all;}
+.gantt-bar:hover{opacity:0.75;}
+.gantt-empty{padding:48px 20px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted);}
+.gantt-legend{display:flex;flex-wrap:wrap;gap:20px;padding:14px 20px;border-top:1px solid var(--border);background:var(--raised);}
+.gantt-legend-item{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;color:var(--sub);}
+.legend-sw{width:16px;height:6px;}
+/* FUNNEL TIER */
+.funnel-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+.funnel-item{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:var(--raised);border:1px solid var(--border);cursor:pointer;transition:border-color 0.12s;user-select:none;}
+.funnel-item:hover{border-color:var(--border2);}
+.funnel-item.sel{border-color:var(--blue);background:rgba(46,91,255,0.08);}
+.funnel-item .addon-cb{width:14px;height:14px;min-width:14px;border:1px solid var(--muted);display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all 0.12s;flex-shrink:0;}
+.funnel-item.sel .addon-cb{background:var(--blue);border-color:var(--blue);}
+.funnel-item .addon-tick{color:#fff;font-size:9px;line-height:1;display:none;}
+.funnel-item.sel .addon-tick{display:block;}
+
+
+/* ── ADMIN MODE ── */
+.admin-bar{display:none;background:rgba(46,91,255,0.08);border-bottom:1px solid rgba(46,91,255,0.2);padding:7px 32px;font-family:var(--mono);font-size:10px;color:var(--blue);letter-spacing:0.07em;display:none;align-items:center;justify-content:space-between;}
+.admin-bar.visible{display:flex;}
+.admin-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);display:inline-block;margin-right:8px;}
+.admin-btn{font-family:var(--mono);font-size:10px;color:var(--blue);background:transparent;border:1px solid rgba(46,91,255,0.3);padding:4px 12px;cursor:pointer;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;}
+.admin-btn:hover{background:rgba(46,91,255,0.12);}
+.admin-btn.danger{color:var(--red);border-color:rgba(232,64,64,0.3);}
+.admin-btn.danger:hover{background:rgba(232,64,64,0.08);}
+.lock-btn{font-family:var(--mono);font-size:10px;color:var(--muted);background:transparent;border:1px solid var(--border);padding:4px 12px;cursor:pointer;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;}
+.lock-btn:hover{color:var(--text);border-color:var(--border2);}
+/* PIN MODAL */
+.pin-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.18s;}
+.pin-overlay.open{opacity:1;pointer-events:all;}
+.pin-box{background:var(--surface);border:1px solid var(--border2);padding:40px;width:360px;text-align:center;}
+.pin-title{font-size:16px;font-weight:400;letter-spacing:-0.01em;margin-bottom:6px;}
+.pin-sub{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:28px;}
+.pin-input{width:100%;padding:14px 16px;background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:24px;letter-spacing:0.3em;text-align:center;outline:none;transition:border-color 0.15s;margin-bottom:12px;}
+.pin-input:focus{border-color:var(--border2);}
+.pin-input.err{border-color:var(--red)!important;animation:shake 0.3s ease;}
+.pin-error{font-family:var(--mono);font-size:11px;color:var(--red);margin-top:4px;height:16px;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* SETTINGS PANEL */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;}
+.settings-section{border:1px solid var(--border);background:var(--surface);}
+.settings-section-hdr{padding:14px 18px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--sub);letter-spacing:0.09em;text-transform:uppercase;}
+.settings-body{padding:18px;}
+.settings-field{margin-bottom:14px;}
+.settings-field:last-child{margin-bottom:0;}
+.settings-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;display:block;margin-bottom:6px;}
+.settings-input{width:100%;padding:8px 10px;background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color 0.15s;}
+.settings-input:focus{border-color:var(--border2);}
+.deliverable-edit-table{border:1px solid var(--border);}
+.de-hdr{display:grid;grid-template-columns:1fr 80px 80px;gap:0;padding:9px 14px;background:var(--raised);border-bottom:1px solid var(--border);}
+.de-hdr span{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;}
+.de-row{display:grid;grid-template-columns:1fr 80px 80px;gap:0;padding:8px 14px;border-bottom:1px solid var(--border);align-items:center;}
+.de-row:last-child{border-bottom:none;}
+.de-row:hover{background:var(--raised);}
+.de-name{font-size:12px;color:var(--text);}
+.de-cat{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;}
+.de-input{width:100%;padding:5px 8px;background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;text-align:right;}
+.de-input:focus{border-color:var(--blue);}
+/* Admin-only elements */
+.admin-only{display:none!important;}
+body.admin-mode .admin-only{display:flex!important;}
+body.admin-mode .admin-only-block{display:block!important;}
+.admin-only-block{display:none!important;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- PIN MODAL -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-box">
+    <div class="pin-title">Admin access</div>
+    <div class="pin-sub">Enter PIN to unlock editing</div>
+    <input class="pin-input" id="pin-input" type="password" maxlength="6" placeholder="••••" oninput="checkPin()" autocomplete="off">
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
+<!-- ADMIN BAR -->
+<div class="admin-bar" id="admin-bar">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <span><span class="admin-dot"></span>Admin mode</span>
+    <button class="admin-btn" onclick="go(document.querySelector('[data-panel=settings]'),'settings')">Settings</button>
+    <button class="admin-btn danger" onclick="clearAllProjects()">Clear all projects</button>
+  </div>
+  <button class="admin-btn" onclick="lockAdmin()">Lock</button>
+</div>
+
+<header class="topbar">
+  <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCADiA18DASIAAhEBAxEB/8QAHQABAAMBAQEBAQEAAAAAAAAAAAcICQUGBAMBAv/EAGEQAAAEBAEECA8KCQoFAwUAAAABAgMEBQYRBwgSIXUJMTY4QbKztBMUFxgiN1FXYXF2gYSS0RUyR1WFkZShxNQjM0JSVGJyldMWQ1Z0g6KlscLSJDQ1gsOTwfBTY2Rzo//EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCmQAP0hmH4qJahoZlx991ZIbbbSalLUZ2JJEWkzM9FgH5iRsKcE8RsSjS9TkhcTLjOyplGH0GFLu2UelduEkEoy7gszk15KEDL4eFqnFGFTFx6rOQ8kUZGyxwkb9vfq/U96XDnbRW2h2WYdhuHh2m2WW0klDaEklKUltERFoIgFSqFyJpDDoQ9WlWx0e7tqh5Y2lhsj7hrWSlKLxEkTFTuTpgxI0JKHoWXxS07a49a4o1H3TJxRp+YiISsADzsBQdDQCMyBoynIVFrZrMsZQVvMkfYumKbW0hpdPSlTbd8xJwbZkm+3YraLjrAA8pNcNMOpqSimNCUxFGrbU5KmTV475tyMR/VGS1gvPErNFNOyh5RW6NLotxsy8SFGpH90TWACk2IWRPModDkTQlVtRpFc0wc1b6Gu3cJ1BGkz8aUl4RWSv6Eq6g5scsq2QxkqiDM+hm6i7bpFtmhwrpWXhSZjXQc2p5BJKnkz8mqGVwkzl75Wch4lslpPuHp2jLgMtJcADHkBZjKhyY4yhG36soZETMaaK64mFO635eW2ar7a2i/O208N9KhWcAAAAegw1kkLUuItNU5HOPNwk1m8LBPrZMicSh15KFGkzIyJVlHa5GV+Axd/rKsLPj+s/pkN93FM8Ce3fQflJLuctjWUBWbrKsLPj+s/pkN93FUMp3DyS4YYqP0rIIqYRME3CMvk5GuIW7nLIzMroSkraO4NSBnPl974aK1bC8UwFfxIGTvRUqxExikVHTuIjYeAmHTHRXINaUup6HDuulmmpKi98gr3I9F/GI/EzZEu+dpH03mT4CzPWVYWfH9Z/TIb7uIAywcFKVwe/kt/JmYTqL91+m+mPdF5peb0LoObm5jaLX6Kq977RbXDowKZ7Jp8H3yl9lAUzAAABKuS5h3T+KGJ/8AJapIyZQkKqAefbXArQhw3EGmxXWhZWsaj2uAtIioTZkPRvSeUpTjZqzUxTcWwo86xf8ALOKIj7ulJFbu2AWT6yrCz4/rP6ZDfdw6yrCz4/rP6ZDfdxZkAFZusqws+P6z+mQ33cOsqws+P6z+mQ33cWZABTDHXJVoGhsJp/Vkkm1UxMwlrCXWm4mJYW0f4RKVZxJZSdiSZnoMtoU2Gq+UlC9OYB1w1mqVmyWIdsX6iDXfzZtxlQAC+8tyMMLomXQ0S5PqxJbrKFqJMXDWIzIj0fgBQthpx99thpOc44okJK9rmZ2IbKJIkpJKSIiIrERcACs/WVYWfH9Z/TIb7uHWVYWfH9Z/TIb7uLMgArN1lWFnx/Wf0yG+7h1lWFnx/Wf0yG+7izIAMhMQpTAyGv6ikcreeegJdNYmEhnHjI3FtNuqQhSrERZxkRGdiLTwEPipqCamdRyyWvqWlqLi2mHDQZEokqWSTMr302Mf2qI33SqWaTHOzumox5/Ove+cs1Xv5x9NCbuJDrKH5VIC8vWVYWfH9Z/TIb7uHWVYWfH9Z/TIb7uLMgArN1lWFnx/Wf0yG+7h1lWFnx/Wf0yG+7izIAKzdZVhZ8f1n9Mhvu4dZVhZ8f1n9Mhvu4syACs3WVYWfH9Z/TIb7uHWVYWfH9Z/TIb7uLMgArN1lWFnx/Wf0yG+7h1lWFnx/Wf0yG+7izIAKzdZVhZ8f1n9Mhvu4dZVhZ8f1n9Mhvu4syACs3WVYWfH9Z/TIb7uHWVYWfH9Z/TIb7uLMgArN1lWFnx/Wf0yG+7h1lWFnx/Wf0yG+7izIAKzdZVhZ8f1n9Mhvu4dZVhZ8f1n9Mhvu4syACiuU/k2URhhhY7VVPzeooiMbjGWehxz7K2zSszI9CGknfa038wqiNGcvve8xesoXjGM5gAX7pjJDwpmNNyuYRERUhPRUG085mxqCLOUglHb8HtXMUEGv9CbiJDq2H5JICDOs2wj/Sam+nN/ww6zbCP9Jqb6c3/DFjAAVYq3IpoiLgFfyYqWdyyNJPYnGG3EsqPguRJQovHneYVCxcwxq3C+ovceqYEm+iEaoWLZM1MRSS21IVbguVyOxlcrlpIayDxmM+HknxOoGPpebNoStxBrg4k03VCxBEeY4XiPQZcJGZcIDJoB9s+lcdI55HSWZsmxGwEQ5DRDZ/kOIUaVF85GPiAAAWWyM8BGMQI061q2HUqmoF/MhoVRWKYPJ2791pOi/wCcejgUQDweCuT9X+KJNx8vg0SuRqVY5pHXS2oiOx9DSXZOHoPa7G5WNRC1NFZGuGspaQupI+b1HE6M8jd6VYPxJb7MvXMWSh2WYaHbh4dptllpBIbbbSSUoSRWIiItBERcA/2Ai2EyecF4VkmWsP5WpJcLqnHFespRn9Y/Ca5N+CkxZNt6g4JnRYlQz7zKi8PYLK/nuJZABVKvciuk42Hceoyo5lKIq10sxxFEsGfAVyJK0+O6vEKkYr4YVnhjOiltWSpUOlwz6Wi2jz4eJIts218PB2J2UVyuRXGsg4lc0nIK2pmKp2pZc1Hy+JTZSFlpQrgWg9tKivoUWkgGQQCRsoTCuaYS189Iopa4mXPkb8sjDL8eze2m2glpPQou7Y9oyEcgAshkjYD0hi7Tk8mVSTGewjsvi0MNFL32kJUlSM4zVntr037lhW8Xm2NfcPVusmeSARTlc4D0hhFTkjmVNzGexbswi1sOlMH2lpSlKM4jTmNo037txW8Xm2SjcPSWsnuSFGQAXPwWyUcO61wrp6qprOapZjZlCE+83DRTCWkqMzKySUyZkWjhMxTAamZK+95orVqeMoBGXWVYWfH9Z/TIb7uHWVYWfH9Z/TIb7uLMgArbDZGGE7JKJyZ1ZEX2jcjWSt4s1kh+3WbYR/pNTfTm/wCGLGAAr+WSFg2RW6SnR+H3RV7B/etDwa/Qpz+8VewT+ACuTmRrhIpKiTFVOgzI7GmOb0eK7Q4s0yJaDcbMpXVtSwq7aDiegPkR+JKEeDhFpwAUWqrIkqyEQtymqxlE1ItJNxjC4RR+As03Cv4zLzCCsRMIcR6AJTtUUpHwkIk7dONkT0Pt6LutmaSvfQRmR+AavD+OIQ4hTbiUrQojJSVFcjI+AwGNADRHG/JUomtWX5nSbbNLT4yNRdARaDfV3Ftl7zT+Ui22ZmlQofiFRdSUFUz9PVRLXIGOZ0lfSh1HAtCtpSTttl4jsZGQDzwAAAJwyRsIqbxdqOeS6pI6bQjUvhG32jl7raFKUpeaZKz0L0W7lhB4tnsa+7erdWs8qAkzrKsLPj+s/pkN93DrKsLPj+s/pkN93FmQAVm6yrCz4/rP6ZDfdw6yrCz4/rP6ZDfdxZkAFZusqws+P6z+mQ33cefxEyRMNqdo6OnMFO6tciIfoeYl6KhzQec4lJ3ImCPaUfCLcjxmNvaxm/8AY8s2AyaF3MhTBFiDlsPinVEGS42JI1SOHdToZa2umDI/ylac3uJ7LTnFasmTxQC8SsWpNTK0r6QNw4iYrT+RDN9kvTwGrQgj7qyGqcMwzDQzUNDtIZZaQSG20JslCSKxERFtERAP0AAAAAAAAAAAAAAAAH+Xm23mltOtpcbWk0rQorkoj2yMuEhnZlm4Kt4bVU3UdOw2ZS04dMm20l2MFEWM1M/smRGpHgJRfkkZ6KjyWMNEwWIeG85pKNSgjjYc+l3FF+JfT2TS/MoivbbK5cIDJQB+0dCxEDGvwUW0pmIh3FNOtq20LSdjI/CRkY/EB7PAnt30H5SS7nLY1lGTWBPbvoPykl3OWxrKADOfL73w0Vq2F4pjRgZz5fe+GitWwvFMBX8TNkS752kfTeZPiGRM2RLvnaR9N5k+A0yFM9k0+D75S+yi5gpnsmnwffKX2UBTMAAAElZLsb0hlB0S/nGnOmjbNyt/OEbfD+0I1Hp8Joz3PxUpKPvbpadwT17X96+g9rzANcQAAAAAB5XGFlERhJWLDpXbckMchRXtcjh1kYyRGwVZtOP0fOmGk5zjkvfQkr2uZtqIhj6A6lIsFFVZJ4ZSjSTscwgzLgu4khsIMjsJGDicVaRhibJ03Z5BIzDK+dd9BWt4RriAAAAA5lWR3uZS02mWdm9KQLz987NtmINW3wbW2OmPEY+xvudghW8WSs1SZDGJQdy0KUypKT0+EyAZPDtUJu4kOsoflUjijtUJu4kOsoflUgNfgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQBl973mL1lC8YxnMNGcvve8xesoXjGM5gAa/0JuIkOrYfkkjIAa/0JuIkOrYfkkgPI5TsREQmANZRMK+6w+3LlGhxpZpUk85OkjLSQzIKraqI7lU06Iy//AD3f9w0yyqN7zWurVcZIyzAaL5D2KE0xCw5jJZUEU5GTin3m2HIpxWct9hwjNpSzPSa+wWkz4c0jO5mYsCKZ7GX8IPyb9qFzAGY+WbCsQeUvWDUOgkIU7DOmRfnLhWVqPzqUZ+cQ+Jmy2t87V3oXMmBDID7ZBLIudz2XyaARnxcfEtwrCe644okpL5zIa40LTUvo+jpTS8qQSYOWwqIds7WNdi0rPwqO6j8JmMy8lxlh/KEolEQnOQU0Qsitfskkakn6xENTgAAHxT6P9ypHHzPoRvdJwzj/AEMjsa8xJqtfw2AfaAyPxHr6qsQagfnNUTeIjXXHDU2yaz6DDpPaQ2i9kpLa0be2dzuYnPIcxbqKV4lwFBzabRUbIZslbMOy+s3ChXySakG3fSlKrGk0louoj4LgL+gAAIFy66QhakwJjpsbRHH0+6iNh1205hqJDqb9w0qzvGhIzhGpmVRvea11arjJGWYALzbGvuHq3WTPJCjIvNsa+4erdZM8kAbJRuHpLWT3JCjIvNslG4ektZPckKMgA1MyV97zRWrU8ZQyzGpmSvveaK1anjKASYAAAAAAAAAAAAAAAAA8FjjhZTuK1HuSSdNE1FtEpcvj0J/CQjpltl3UnYiUnaMu4ZEZe9ABkJX1Jzqh6umFL1BDdLzCBdNCyLSlZbaVpPhSojIyPuGOENAMvXC5qp6BKvJXDXnFPovEmguyegr9kR//AKzPPvwJz/AM/wAAFs9jX3b1bq1nlRUwWz2NfdvVurWeVAXlAAAAEB5c9X1NRWEsrmtKzmKlMa7PmYdx6HMiUps2IhRp0ltXSk/MKYdX7GXvhTn10+wBqWPGY29rGb/2PLNjOfq/Yy98Kc+un2D5ZpjdixNIByAmFdTaIhnbZ7a1psqxkZcHdIjAWX2NulENSKp62eZLosREIlkMsy0pQhJOOW8Bmtvzo8At8IiyOZMUkyc6UaNBE7FsuRrhkVs7orq1pM/+w0F5hLoAAAAAA4GItVy6h6Hm9WTXOOElsObykJPsnFaCSgvCpRpSXhMB24qIYhYdcREvNsMtlnLccUSUpLumZ6CIcWX1pR0wjEwcBVkhi4lZ2SyxMWlrUfgSSrjL/F7FassT567MKjmbpwueZw0uaWaYaGTfQSUbRnbbUd1HwmPCgNmAFEsi/HqoIGspfh5Vs0fmUnmayhpe9ErNbsI+ehtBKPSbajsjNO9jNNrFe97QAAAAAAAZj5ZFOIpvKHqVphskQ8wcRMWyIrXN5BKWf/qdEEPi0myQQCGcVaemSUpI4mSk0q3Cbbzh3PzLIr+DwCrYD2eBPbvoPykl3OWxrKMmsCe3fQflJLuctjWUAGc+X3vhorVsLxTGjAzny+98NFatheKYCv4mbIl3ztI+m8yfEMiZsiXfO0j6bzJ8BpkKZ7Jp8H3yl9lFzBTPZNPg++UvsoCmYAAAP2gYhcJGsRbXv2XEuJ8aTuX+Q/EAGyrLiHmUPNKzm3EkpJ90j0kY/wBjgYbRvunh3TUyzs7puUwr+dnZ185lKr34dvbHfAAAAH4xzBRUE/DGrNJ1tTeda9rla4xtGzAxznbJQ85jodLfQyaiHEEi1s2yjKwD12T6x0zjrQrefm2qCCcva/vXkKt57WGrwyzyWGCiMoWimzbNy0zSuxFe2alSr+a1/MNTAAAAAESZYkZ0jk2Vg8RmRrh2WdBEf4yIaRw/tCWxX/L8jOlcnmKY/S5lCs7XcUbnm94AznHaoTdxIdZQ/KpHFHaoTdxIdZQ/KpAa/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgDL73vMXrKF4xjOYaM5fe95i9ZQvGMZzAA1/oTcRIdWw/JJGQA1/oTcRIdWw/JJAeMyqN7zWurVcZIyzGpmVRvea11arjJGWYC5mxl/CD8m/ahcwUz2Mv4Qfk37ULmAMzctrfO1d6FzJgQyJmy2t87V3oXMmBDICR8mJ8ofKBolxSTURzZpFi/W7H/wBxqiMr8mFhMRlA0S2ozIimzS9HdTdRf5DVAAHGrvcRPtWxHJKHZHn8SnzhcOamiSTnGzKItzNva9mVHYBkOJNyV98NRWsk8VQjISbkr74aitZJ4qgGpYAACM8qje81rq1XGSMsxqZlUb3mtdWq4yRlmAC82xr7h6t1kzyQoyLzbGvuHq3WTPJAGyUbh6S1k9yQoyLzbJRuHpLWT3JCjIANTMlfe80Vq1PGUMsxqZkr73mitWp4ygEmAAAAAAAAjnKWq+c0HgnUFWU+tlEzgelugqebz0FnxLTarp4exWoUt673GT9Nkv7uT7QGjACgdI5Z+Ikvjb1HJ5LPIRRkakNoVCul+ysrp+dJi32CWLFL4s00ubU8441EQ6iRGwL9iehlne17aDSdjsotB2PaMjIg98AAAAAAPxjoWHjoJ+Ci2UPw0Q2pp5tZXStCispJ+AyMyGSmK1KvURiRP6UeNR+5sa4y0pW2tq921H+0g0n5xriM/dkQp8pbjNATxpvNbnEqbU4r855pSm1f3OhAK0i2exr7t6t1azyoqYLZ7Gvu3q3VrPKgLygAAKzbI72kJN5SMc2iRQAX/wBkd7SEm8pGObRIoAAAAANb8IYEpZhPSMuJGZ0tI4NoyO17pYQR3toM78I9SOdS7CIamZXDNmo0NQbKEmrbMiQRaR0QAAAAFf8AL9jDhsnqJZJSiKLmcKyZEW3YzXY/B2H1ELACueyGdoRjXcPyboDPMAAB9sgmT8mnsvnEL/zEDEtxLWn8pCiUX1kNixjONmAAAAAAAAUl2S5KSn1ErJJZxwsWRnbSZEpq3+Z/OKgi4GyXf9boj+rRnGaFPwHs8Ce3fQflJLuctjWUZNYE9u+g/KSXc5bGsoAM58vvfDRWrYXimNGBnPl974aK1bC8UwFfxM2RLvnaR9N5k+IZEzZEu+dpH03mT4DTIUz2TT4PvlL7KLmCmeyafB98pfZQFMwAAAAABqvk2RnT+AdDv3M82Sw7OkiL8Wgm+D9kSCIayKYwozJppW5lnslFMqsVrZsU7b+7YTKAAAAAyGxGYXDYhVJDOGk1tTaKQo07RmTqi0DXkZLY2soh8Z63h275jVRR6E3PgKIcIgHsMjNg4jKXo9tKiSZOxK7n+rCvK/8AYacjNjIYYS7lKSBxSDUbLEYtJ6exPpdxN/mUZecaTgAAAAKt7JDG9Dwpp6X3K788J7aO9kMOl/5BaQU32TCNIoehZck7mpcc8stOixMJT/mr5gFLx2qE3cSHWUPyqRxR2qE3cSHWUPyqQGvwAAAAAAAAAAAAAAD5prMZfKZc/MZrHQsBBQ6c96IiXUttNp7qlKMiIvCYD6QHjOqxhZ3y6M/fsN/vDqsYWd8ujP37Df7wHswHjOqxhZ3y6M/fsN/vDqsYWd8ujP37Df7wHswHjOqxhZ3y6M/fsN/vDqsYWd8ujP37Df7wHswHjOqxhZ3y6M/fsN/vDqsYWd8ujP37Df7wEZ5fe95i9ZQvGMZzC+uW7X9Cz/AuIlshrOnZtHLmMOpMPAzNl9wyIzMzzUKM7F3doUKABr/Qm4iQ6th+SSMgBr/Qm4iQ6th+SSA8ZlUb3mtdWq4yRlmNTMqje81rq1XGSMswFzNjL+EH5N+1C5gpnsZfwg/Jv2oXMAZm5bW+dq70LmTAhkTNltb52rvQuZMCGQEoZKLTj2UTRaG05yimGeZXtoShRn9RGNSBmHkctrdylKOS2k1GT76jIu4UM6Zn8xGNPAAeQxteXD4M1vEN2z2qdj1puXCUO4ZD148DlGKUnAauTSo0n7hxRXI7aDbMjAZSiTclffDUVrJPFUIyEm5K++GorWSeKoBqWAAAjPKo3vNa6tVxkjLMamZVG95rXVquMkZZgAvNsa+4erdZM8kKMi82xr7h6t1kzyQBslG4ektZPckKMi82yUbh6S1k9yQoyADUzJX3vNFatTxlDLMamZK+95orVqeMoBJgAAAAAAhnLa3sVXehc9YGZo0yy2t7FV3oXPWBmaACXMkWtImi8dZA4h00wU2fTK41Bn2KkPKJKTP9leYq/gPuiIx9kkjVS6cwMwSakqhYht4jSRGZGlRK0X0X0ANjAAAAAAAFP9ktl7a5LRU1sknGomLhzPhMlpbV9WYfzi4AqZslKklRVIoNRZxzF4yK+kyJsr/5l84CjQtnsa+7erdWs8qKmC2exr7t6t1azyoC8oAACs2yO9pCTeUjHNokUAF/9kd7SEm8pGObRIoAAAAANiKZeREU3K4hu+Y7BtLTcuA0EZDoDz+Gr/TWHVNROZmdGlEK5m3va7KTtcegAAAAAV62QOHN7J+U4SrdAm0M4ZWve5LTbwe+FhRHuUbRkTX+DFRUzAJJUe8wl6DSZ2znmlpcSm+12RpzdP5wDKkB+kSw/CxLsNEsuMPtLNDjbiTSpCiOxpMj0kZHosPzABswMZxJvV+xl74U59dPsAalgMtOr9jL3wpz66fYHV+xl74U59dPsAalgMtOr9jL3wpz66fYHV+xl74U59dPsATnsl3/AFuiP6tGcZoU/Ho64rmra3iIaIqyexc3dhUKQwuIMjNCVGRmRWLukPOAPZ4E9u+g/KSXc5bGsoyawJ7d9B+Uku5y2NZQAZz5fe+GitWwvFMaMDOfL73w0Vq2F4pgK/iZsiXfO0j6bzJ8QyJmyJd87SPpvMnwGmQpnsmnwffKX2UXMFM9k0+D75S+ygKZgAAAAADRDY+IworAFTGcR9KTiJZ29q6W3P8AWLECqmxtRufhvU8vzvxE4S9bO2s9lCdrg/F7fg8AtWAAAAAyqylWVsY/VwhaSSZzl9di7ilZxfUZDVUZeZXDCIfKNrNtBqMjjEL091TSFH9ZgPX7H8yt3KCbWm1mZVErVfudgn/NRDRQZ+bHQyh3HOZrVe7NPPrTbu9Hh0/5KMaBgAAAAKJ7JLG9ExHpiXZ1+gShT+bnbXRHlJvbg/F7fDbwC9gzu2QWO6bx/wCgZ1+kpPDMWzr2ubjlvB+M+sBXgdqhN3Eh1lD8qkcUdqhN3Eh1lD8qkBr8AAAAAAAAAAAAACM8qje81rq1XGSJMEZ5VG95rXVquMkBlmAAAAAAAAAAAAAAAAA1/oTcRIdWw/JJGQA1/oTcRIdWw/JJAeMyqN7zWurVcZIyzGpmVRvea11arjJGWYC5mxl/CD8m/ahcwUz2Mv4Qfk37ULmAMzctrfO1d6FzJgQyJmy2t87V3oXMmBDICZsiXfO0j6bzJ8aZDM3Il3ztI+m8yfGmQAI6ymuj9QCt+l7Z/uQ9e/5tuy/u3EijwuUKwqIwJrptJkRlIIxenuJZUo/8gGUIk3JX3w1FayTxVCMhJuSvvhqK1kniqAalgAAIzyqN7zWurVcZIyzGpmVRvea11arjJGWYALzbGvuHq3WTPJCjIvNsa+4erdZM8kAbJRuHpLWT3JCjIvNslG4ektZPckKMgA1MyV97zRWrU8ZQyzGpmSvveaK1anjKASYAAAAAAIZy2t7FV3oXPWBmaNMstrexVd6Fz1gZmgAAADY6UOrelUG86rOccYQpR90zSRmY+oceh1KXRUjWtRqUqXQ5mZnczPoaR2AAAAAFQNku/wCh0R/WYzitC34qBsl3/Q6I/rMZxWgFJhbPY1929W6tZ5UVMFs9jX3b1bq1nlQF5QAAFZtkd7SEm8pGObRIoAL/AOyO9pCTeUjHNokUAAAAAGruTxHpmWBVDxSVGq0ihGlGZmZmptpLaj0+FJj3YgDIIqFE5wAhJabmc9JY5+DWRnpzVK6Mk/FZ2xfsn3BP4AAAAAAAIPx5ya6MxQi3Z2w85T9ROF2cdDNktuIMtBG63cs4/wBYjSfdM7EQqNiLkuYtUipx6GkyKjgUXMoiUqN1dvC0ZE5fxJUXhGlIAMbY2FioGLchI2Gehoho81xp5BoWg+4ZHpIx+I17q+jaTq+F6WqinJXOGySaU9NwyXFIL9VRldJ+EjIxBNeZHGG06z3qajZnTEQozMktr6ahy/7HDzvmWQDPoBP2I2SbinS5ORMohYWqYFBXz5cuz5F4WV2UZ+BGeIImEHGS+Ndgo+EfhIplWa6y+2aFoPuGk9JH4wH4AAAAAAD2eBPbvoPykl3OWxrKMmsCe3fQflJLuctjWUAGc+X3vhorVsLxTGjAzny+98NFatheKYCv4mbIl3ztI+m8yfEMiZsiXfO0j6bzJ8BpkKZ7Jp8H3yl9lFzBTPZNPg++UvsoCmYAAAAAAuXsZ8YedXUvVexlAvI0FYvx5K0+r8xi5oodsbkYSMUakl+i70l6NtHfsH2y2/7QXxAAAAAZoZbrCmcpmqVGkkpdTBrRbhLpRkjP5yMaXjOLL1YS1lFzJxJmZvQEKtV+A+hkn/SQD12xtsrViZUsQSSzESYkGfcNTyDLin8wveKQ7GmwlVT1nEmZ5zcFDIIuCylrM+KQu8AAAAAzKy0o3p7KVqtRKuhlUMwktGjNhmiPa/WzhpqMpso2MOOx6rl4zM82eRTOkrfi3DR/pAeAHaoTdxIdZQ/KpHFHaoTdxIdZQ/KpAa/AAAAAAAAAAAAAAjPKo3vNa6tVxkiTBzKqkEpqinY2n57CdNyyOaNqJZ6IpGenbtnIMlFtcBkAx6AaZda5gT/Qb/Fo3+MHWuYE/wBBv8Wjf4wDM0Bpl1rmBP8AQb/Fo3+MHWuYE/0G/wAWjf4wDM0Bpl1rmBP9Bv8AFo3+MHWuYE/0G/xaN/jAMzQGmXWuYE/0G/xaN/jB1rmBP9Bv8Wjf4wDM0B7rH6QSml8Zaop+RQnSksgY42oZnoil5ibEds5Zmo9vhMx4UAGv9CbiJDq2H5JIyAGv9CbiJDq2H5JIDxmVRvea11arjJGWY1MyqN7zWurVcZIyzAXM2Mv4Qfk37ULmCmexl/CD8m/ahcwBmbltb52rvQuZMCGRM2W1vnau9C5kwIZATDkXPoh8pmkHFkoyNcUjR3VQjyS+sxpuMp8nGbIkmO9FzB1fQ2ym7LK1XsSUuK6GZn4LLO41YAB8NQyxmdSCYyaJUpLEfCuwzhp2yS4g0nbzGPuABj3VshmVL1NMqdm7Bsx8uiVw76ODOSdrl3SPbI+EjIx8sqmMwlMxYmMqjoqAjYdWezEQzqmnW1d1KkmRkfhIaTZRWT5TWLTZTNt/3FqVlvMbmDbecl5JbSHk6M4i2iUR3LwkVhRrFTAzErDhTr09kDsRLW9PulA3fhrd1SiK6P8AvJIDj9VjFPvl1n+/Yn/eHVYxT75dZ/v2J/3jxgAPVTXEjESbS5+XTWvapj4KITmPQ8TN33GnE9xSVLMjLwGPKgAALzbGvuHq3WTPJCjIvNsa+4erdZM8kAbJRuHpLWT3JCjIvNslG4ektZPckKMgA1MyV97zRWrU8ZQyzGpmSvveaK1anjKASYAAAAAAIZy2t7FV3oXPWBmaNMstrexVd6Fz1gZmgAAADX+hNxEh1bD8kkdkcahNxEh1bD8kkdkAAAABUDZLv+h0R/WYzitC34qLsljClUxRkSRlmtxsSgy4bqQgy4pgKQi2exr7t6t1azyoqYLZ7Gvu3q3VrPKgLygAAKzbI72kJN5SMc2iRQAX/wBkd7SEm8pGObRIoAAAAALM7H1XqKexNjKPjn8yDqNkiYzj0FFNEakFp2s5BuF4TzC7gv8AjG+WxsXLZjDTGAiHIeLhXUvMPNnZTbiTJSVEfAZGRGNP8mzFuXYs0EzMOiNNT2CSlmbQiTsaHbfjEl+YuxmXc0pvdJgJRAAAAAAAAAAAAAB4/EvDKiMRpf0pVshho5SU5rUSRZkQz+w4myiK+m17HwkY9gADPLKEyWqjoCHiahpR16oacaut1OZ/xcGgtN3EkVlpLhWkitpM0kRXFdBswKSZaeT5DSdiLxKoiD6FBZ/RJxLmk9ixc9L7ZFtJufZJLavctF7BUIAAB7PAnt30H5SS7nLY1lGTWBPbvoPykl3OWxrKADOfL73w0Vq2F4pjRgZz5fe+GitWwvFMBX8TNkS752kfTeZPiGRM2RLvnaR9N5k+A0yFM9k0+D75S+yi5gpnsmnwffKX2UBTMAAAAAAWF2P2N6VygUMZ1unJTEs2zrXtmOef3m17BomMyci6MOCylaTUajJDq4llRXtfOhnSL67H5hpsAAAAAz32RFhTWO8G4oiInpDDrTbhLoryf80mNCBQnZIWEJxbp+JIjz1yFKDPgsmIeMuMYD1mxmsKJuvok2yzTOXoSvwl0yZl9aRcoVH2NRgk0pWUTnaXI6HbzbbWa2s7/wB76hbgAAAABkDXkZ7o1zP5h+lTOJe2re+dUe15xrpOYxMvlEbMFWJMNDuPHcjMrJSZ8GngGOSjNSjUozMzO5mfCA/g7VCbuJDrKH5VI4o7VCbuJDrKH5VIDX4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAGWmVRvhq11kripEZCTcqjfDVrrJXFSIyABr/AEJuIkOrYfkkjIAa/wBCbiJDq2H5JIDxmVRvea11arjJGWY1MyqN7zWurVcZIyzAXM2Mv4Qfk37ULmCmexl/CD8m/ahcwBmbltb52rvQuZMCGRM2W1vnau9C5kwIZAf7ZdcYeQ8ytTbjaiUhaTsaTI7kZH3RrDghXMHiLhjJqphnUKeiGEojW0/zUSkiJ1Blwdlcy7pGR8IybEw5MWNsywiqZaIhDkbTUwWn3Qg0n2SDLQTzV9BLItstpRaDtYjINNwHHo6p5BWFPw8/pqaQ8zlsQV23mVcPClRHpSouFJkRlwkOwAD+KIlJNKiIyMrGR8I/oAIIxoyXsP6+J6YSllNLzxRGoomBaImHVf8A3GdBH405p8Jme0KN4w4S1phZNyg6nl3/AArqjTCzCHuuGiP2VWKyrfkqIleC2katjmVVT8lqmQRchqCXQ8xlsWjMeYeTdKi4DLhIyPSRlYyMiMjIwGPQCWMpvB6MwirgoJpx2KkEwJT0ri1l2RpIyzml8Gei5XMtBkaT0XMiicAF5tjX3D1brJnkhRkXm2NfcPVusmeSANko3D0lrJ7khRkXm2SjcPSWsnuSFGQAamZK+95orVqeMoZZjUzJX3vNFatTxlAJMAAAAAAEM5bW9iq70LnrAzNGmWW1vYqu9C56wMzQAAABr/Qm4iQ6th+SSOyObSzCYamJVDIM1JagmUEZ7ZkSCIdIAAAABU3ZKNw9Jaye5IWyFWdkjIupbTirFcp3Yj/sHAFDRbPY1929W6tZ5UVMFs9jX3b1bq1nlQF5QAAHmcR6CpPESRsySsZT7pwDESmKba6YdZzXUpUklXbUk/erUVr20+IR/wBa5gT/AEG/xaN/jCZgAQz1rmBP9Bv8Wjf4wrzlvYR4e4cUrTsbRlP+5cRGRzjT6+nH3s9JIuRWcWoi09wXsFTdko3D0lrJ7kgFGR6XDat6iw9q2FqamY04aMYOyknpbfbP3zbifyknba8RlYyIy80ADTzATHyjsVYFqGZfRKajSi78qiHCzjMi0qaUdicTt7XZFwkWgzlwY1w7z0M+3EQ7rjLzaiUhxtRpUlRbRkZaSMWFwmytsQqRaal9SIbq2WosRHFuGiLQnuE8RHnf95KPwkA0PAQVQ2VbhDUiW242bRVOxa9BtTOHNKb8P4RGcgi8KjITLIJ7JKggijZDOJfNYU9p6DiUPI9ZJmQDoAAAAAAAAAAD8oyGh4yEehItlt+HfbU2604m6VoUVjSZcJGRmQ/UAGVeUXh8rDPFmbU02lfueaiipctW2qGcuadPDmmSkGfCaDEdi7OyT00hyR0rV7aLLYiXJa8oi98S09EbI/EbbnrCkwD2eBPbvoPykl3OWxrKMmsCe3fQflJLuctjWUAGc+X3vhorVsLxTGjAzny+98NFatheKYCv4mbIl3ztI+m8yfEMiZsiXfO0j6bzJ8BpkKZ7Jp8H3yl9lFzBTPZNPg++UvsoCmYAAAAAA9/k5RhwOPVDPEZlnTyFZ0Ff8Y4SP9Q1ZGQeH8b7nV5T8wMyT0rNIZ65kZkWa6lXBp4OAa+AAAAAKP7JWwaaro6Jzis5AxCCLuZriD/1fULwCmmyZQ+igotLfxg2tf0c0lxgHptjdYzcK6jieh26JOzRn299msNHa/gzvrFpRWzY6mDZwLmLhqv0eoIhwittfgGE2/u/WLJgAAADyONMd7m4PVlHkrNUxIo1aDJVjziYXm6eA72GSo1Gys433PydKzfzs3OgSYvnZv4xxDdvPnWtw7Qy5AB2qE3cSHWUPyqRxR2qE3cSHWUPyqQGvwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMtMqjfDVrrJXFSIyEm5VG+GrXWSuKkRkADX+hNxEh1bD8kkZADX+hNxEh1bD8kkB5jKNlcxnWB1WyqUQT8dHxMApDEOwg1rcVnFoIi2zGdTOCGLzzyGkYc1GSlmREa4JSU+czsRF4TGqoAIbySsJIjCjDxyHnBtqn82dTEzAm1ZyWbFZDJGWhWaRqMzLRdSrGZWMTIAjTKSxNhcLcMI6dktBzaJI4WVMmZXXEKI7KtwpQXZH4iLbMgFCMrmbwk8yjaxjoJRKaRFtwpmR37Nhltlf95tQikfpEPPRMQ5ERDq3XnVmtxazupSjO5mZ8JmY/MAAAAerw1xErDDqc+6lJTp+AcUZdGZvnMvkXA42fYq8e2XAZC3GFuWjIo5LUFiJI3ZTEWIlR8uI3ocz7ptn2aC8RrFHAAa+0bVtM1jKimlLTyBm8JciUuGdJRoPuKLbSfgURGO2MfqRqeoKSnLU5pqcRkqj2j7F6GcNJmX5qi2lJPhSZGR8JDQrJOx5axYlT8mnjbMJVUuaJx5LRZrcW1e3RkFwGRmRKTtEaiMtB2SE7gAAIhyv6MYrPAifI6CS42UMnNINVuySpkjUsi7uc3npt3TIZijX+u9xE+1bEckoZAAAvNsa+4erdZM8kKMi82xr7h6t1kzyQBslG4ektZPckKMi82yUbh6S1k9yQoyADUzJX3vNFatTxlDLMamZK+95orVqeMoBJgAAAAAAhnLa3sVXehc9YGZo0yy2t7FV3oXPWBmaAAA/02hbjiW20qWtRkSUpK5mZ8BANjZU0uHlcIw6VnG2UIUV72MkkRj6QAAAAABWLZH2UKwZkcQd89FQtILuWVDxBnxSFnRWnZGWluYGypSE3JuomFLPuF0vElf5zIBn6LZ7Gvu3q3VrPKipgtnsa+7erdWs8qAvKAAAAKzbI72kJN5SMc2iRQABswKm7JRuHpLWT3JCjIAAAAAAAAD6pXMZhKo1EbK4+KgYpHvHoZ5Ta0+JSTIyHygAmmhsqDGGllNtrqJM+hUfzE3a6Pf8AtCMnP7wsfhflk0ZPFswNbSuIpqKVZJxTZnEQpn3TMiz0XP8AVURcKhQcAGx0pmMBNpaxMpXGw8dBRCM9mIh3CcbcT3UqLQZD6hmJk040zvCqroZDkU8/S8W8lMygVGakpSZkRvNlwOJLTo98RWPgMtOm1ocQlxtSVoURGlSTuRkfCQD+gAAAAACDsueVFMsnCeP5ucuXxELFIL+2S2Z+q4oZsDVHKdhERmT9W7KyIyTKXXdKb6UFnl9advgGVwD2eBPbvoPykl3OWxrKMmsCe3fQflJLuctjWUAGc+X3vhorVsLxTGjAzny+98NFatheKYCv4mbIl3ztI+m8yfEMiZsiXfO0j6bzJ8BpkKZ7Jp8H3yl9lFzBTPZNPg++UvsoCmYAAAAAA/02tbbiXG1KQtJkaVJOxkZcJDY6WRaI+Wwsc3bMiGUOpsdysoiMtPDtjG8a34QRvujhNR8wNRqOJkcE6Zna91MIM724QHqQAAAVI2SphKqRo+KPOzm4+IbLuWU2kz8/Yl9YtuKv7JAwasH5DE5xWbn6EGXdzod8/wDT9YDvZALCWsnthxKDSb00ilqPT2R3Sm/zJIvMLBCEchthbWTTTjijSZPPRi024C6adTp86TE3AAAACCcu+NOFycZuwR26cjIRk9rTZ5Ln/jGbov8AbI1G9BwYk8EkzJUTPmjPQVjSlh4z+s0igIAO1Qm7iQ6yh+VSOKO1Qm7iQ6yh+VSA1+AAAAAAAAAAAAABx60qOWUjSsxqWcrdRL5eybz6m0Z6iSRkWguHbHYEZ5VG95rXVquMkB4zrvMGv02c/u5XtDrvMGv02c/u5XtGcwANGeu8wa/TZz+7le0Ou8wa/TZz+7le0ZzAA0Z67zBr9NnP7uV7Q67zBr9NnP7uV7RnMADRnrvMGv02c/u5XtDrvMGv02c/u5XtGcwAPa46VHLKvxcqSpZMt1cvmEYbzCnUZijTYi0lwbQ8UAAA1/oTcRIdWw/JJGQA1/oTcRIdWw/JJAfPiTVUPRFCTerIqFdi2JZDm+tlpREpZEZFYjPRwivEny0qWmM3g5emjJu0cU+hknFRLdk5yiTc/AVxLmVRvea11arjJGXEK8uGimohu2e0slpvtXI7kA2TFStkphDXRlIR9lZrMxfZPudm2R/+MWyh3UREO2+0d23EEtJ2tcjK5CuGyJwXTOBkBEknsoSfMOGokXMkm08gyvwFdSfmIBnyAAA+qUy+Nm01hJVLodcTGxj6IeHZR75xxaiSlJeEzMiEh9QHGXvezn1E+0cXAnt30H5SS7nLY1lAZadQHGXvezn1E+0flF4E4vQkK9FRNAzhphlCnHFqQmyUkVzM9PcIaoDjV3uIn2rYjklAMgBJ+SpNouT5QlGvwbikm/MEwjhEdiU26RtqI+7oVfxkQjASBk4dvuh9dw3KEA1YAAAcurmDiqUm8MlRJN2BeQRnwXbUQx7Gx81aXESuLYaK7jjK0JK9rmaTIhjgAC82xr7h6t1kzyQoyLzbGvuHq3WTPJAGyUbh6S1k9yQoyLzbJRuHpLWT3JCjIANTMlfe80Vq1PGUMsxqZkr73mitWp4ygEmAAAAAACGctrexVd6Fz1gZmjTLLa3sVXehc9YGZoAPtkP/AFyA/rLfGIfEOzQxEqtpElREZHMocjI+H8IkBr+AAAAAAArnshnaEY13D8m6LGCueyGdoRjXcPyboDPMWz2NfdvVurWeVFTBbPY1929W6tZ5UBeUAABWbZHe0hJvKRjm0SKAC/8AsjvaQk3lIxzaJFAAAAABdPJpycsNK8wTp+rKghZmuZx3TPRlMxpoQeZEutpsm2jsUJEjdaHg1+hTn94q9g7+RiwcPkz0e2as67cS5e350U8q31iYAEAdaHg1+hTn94q9gdaHg1+hTn94q9gn8AEAdaHg1+hTn94q9gjnKWycsNKDwTqCrKfhZmiZwPS3QVPRprQWfEtNqum2nsVqFxRDOW1vYqu9C56wAzNAAABrNgZMlzfBmjJi4rOdekcIbh91ZNJJR/ORjJkajZJj5RGTpRjhJzbQJt2v+a4tN/qASkAAAAAAPH44NrdwVrlptJqWunJglKS4TOGcsQyXGuWLHasq3UkbyCxkaA9ngT276D8pJdzlsayjJrAnt30H5SS7nLY1lABnPl974aK1bC8UxowM58vvfDRWrYXimAr+JmyJd87SPpvMnxDImbIl3ztI+m8yfAaZCmeyafB98pfZRcwUz2TT4PvlL7KApmAAAAAAA1MyV4zp7J5op6982WpZ2rfi1KR/pGWY0pyGY3prJsp9rOIzhH4tk9u5f8Q4sr+ZZeawCbwAAAV12QmGN/AJt3MSrpedQzlz203Q4i5eHsreIzFihBmXXDE/k3Tt3oZq6XioR29/e3fQi/8Aft5wHWyNmUMZNVHobvY2YhZ3PhVEuqP6zMS6I3yX2VsZPtEoctc5U2srHwKuovqMhJAAAAAqBsl0ZmSKiJf/APWiYx7a/MS0W3/aCkwtrslMbn1nSEvuX4CXPvWsd+zcJPi/m/8A5oFSgAdqhN3Eh1lD8qkcUdqhN3Eh1lD8qkBr8AAAAAAAAAAAAACM8qje81rq1XGSJMEZ5VG95rXVquMkBlmAAAAAAAAAAAAAAAAA1/oTcRIdWw/JJGQA1/oTcRIdWw/JJAeMyqN7zWurVcZIyzGpmVRvea11arjJGWYDXjDWN90sOqamOdndNSiFezs/OvnMpVe/Dt7Yi/LngiismyfvGRGcI/CPFpPhiG0f5LPbHsMm+M6ewEod4zM82SQzOkrfi0Ej/SPiyqYM47J4rVkiM82Wqe0Hb8WpK/8ASAy0AAAezwJ7d9B+Uku5y2NZRk1gT276D8pJdzlsaygA41d7iJ9q2I5JQ7I41d7iJ9q2I5JQDIASBk4dvuh9dw3KEI/EgZOHb7ofXcNyhANWAAAAY2RTK4aKdh3LZ7SzQq21cjsY2TGPNUsLhqmmsM4aTW1GvIUadozJZloAc0Xm2NfcPVusmeSFGRebY19w9W6yZ5IA2SjcPSWsnuSFGRebZKNw9Jaye5IUZABqZkr73mitWp4yhlmNTMlfe80Vq1PGUAkwAAAAAAQzltb2KrvQuesDM0aZZbW9iq70LnrAzNAB6HDNgorEemIZSjSTs3hEGZcF3kEPPD0+E3bUpLXcFy6AGuIAAAAAACueyGdoRjXcPybosYK4bIg6hvAeEStVjcnsOlBd0+hPHb5iMBnsLZ7Gvu3q3VrPKipgtnsa+7erdWs8qAvKAAArNsjvaQk3lIxzaJFABf8A2R3tISbykY5tEigAAAAA0/yPt7bR39Wd5dwSyIlyPFJVk2UcaVEoul3iuR30lEOkYloAAAABDOW1vYqu9C56wJmEPZaDDkRkzVe23bOJEK4d+4mLZUf1EYDMgAAAGn+R9vbaO/qzvLuDMAao5MUI5BZP1EMuoJKlSlp0iIraHCzyPzkojASOAAAAAAPH43uuMYL1w+0rNcbp2YLSdr2MoZwyGS41XykYnpTAOuHc80Z0kiWrkX56DRbz51vOMqAHs8Ce3fQflJLuctjWUZNYE9u+g/KSXc5bGsoAM58vvfDRWrYXimNGBnPl974aK1bC8UwFfxM2RLvnaR9N5k+IZEzZEu+dpH03mT4DTIUz2TT4PvlL7KLmCmeyafB98pfZQFMwAAAAAAGg2x2xvTOBkdDKVphJ6+2Sc65kk2mVkduArqV8xjPkXk2NaNz6Mq6X3P8AATFh61it2bZp8f8AN/8AzSAtoAAACIssllD+TVWCF3sTMOvR3UxLSi+siEuiNsp+TzCfYCVbKpVBxUZGvQiTZh4ZlTrrqkuIVmpQnSZnm8ADo4AMIh8DKEbQajI6egV6e6phCj+sx7gefw0g4iXYcUzL4uHVDxENKIRl1lSbG2tLKCNJlwGRlYegAAAAGfGyIR3TWOsHDEq5QciYaMrnoM3Xl/PZRfUK3CbcuGO6cylKjbJWcmFahGEnnXL/AJZtR+LSoyt3biEgAdqhN3Eh1lD8qkcUdqhN3Eh1lD8qkBr8AAAAAAAAAAAAADh1/S8vrWjZpSs1eimYKZMGw85DKSl1KTMjuk1EZEejhIx3AAVm6yrCz4/rP6ZDfdw6yrCz4/rP6ZDfdxZkAFZusqws+P6z+mQ33cOsqws+P6z+mQ33cWZABWbrKsLPj+s/pkN93DrKsLPj+s/pkN93FmQAVm6yrCz4/rP6ZDfdw6yrCz4/rP6ZDfdxZkAFJsojJfoHDvB2e1jJJvU0RHy/pfoTcZEsKaV0SIaaPOJLKT96s7WMtNvEKgDTLLa3sVXehc9YGZoANf6E3ESHVsPySRkANf6E3ESHVsPySQHjMqje81rq1XGSMsxqZlUb3mtdWq4yRlmA02yL4zp3JqpNRmRqaREsqK97ZsS6RfVY/OPcYwwZzHCSsIAiMziJFGtERFc7qYWRW8NxE+QDFnE5PbDJmq0JNIpkr+E0r0euJ6mkKmOlkVArzc2IZW0rOK5WUky0l5wGN4D+rSpCzQtJpUk7GRlYyMfwB7PAnt30H5SS7nLY1lGTWBPbvoPykl3OWxrKADjV3uIn2rYjklDsjjV3uIn2rYjklAMgBIGTh2+6H13DcoQj8SBk4dvuh9dw3KEA1YAAABkFXyVIrqoELSaVJmcSRkZWMj6Koa+jI7FntqVbruN5dYDzAvNsa+4erdZM8kKMi82xr7h6t1kzyQBslG4ektZPckKMi82yUbh6S1k9yQoyADUzJX3vNFatTxlDLMamZK+95orVqeMoBJgAAAAAAhnLa3sVXehc9YGZo0yy2t7FV3oXPWBmaAD0+E3bUpLXcFy6B5gSDk5U5H1TjfSUtgG1KNuZsxb6iK5NssrJxaj7nYpMivwmRcIDVcAAAAAABWLZHnkJwYkcOd89dRNLLRwJh4gj4xCzoqZslMaTdFUjLs+xvzF57Ntt9DbJN/8A+n1gKNC2exr7t6t1azyoqYLZ7Gvu3q3VrPKgLygAAKzbI72kJN5SMc2iRQAX/wBkd7SEm8pGObRIoAAAAANJshWOTF5NsiYSaTODiYthVi2jOIW5p8zhfUJyFUNjbn6Img6nplS/wsBMkRiSM/yHmyTYvARsn63hFrwAAAAHJrOn4Gq6SmtNTIjODmcI5CumW2klpMs4vCV7l4SIdYAGSuLOHtR4aVfE07UUG42pC1HDRJIMmotq+hxs+Ej0aNsj0HYyHkRsBVtL07VsqVK6mksDNoMzv0KKZJZJPupM9KT8JWMRWeSvgf050x/JJ4k52d0H3TiczxfjL284Ch+B2GU8xTrmFkErZdRBpWlcxjST2EIxfslGe1nGVySnhPwXMtVJZBQ0tlsLLoJomoWFZQwy2W0lCUklJeYiIc+kaXp2kZOiUUzJoKUwKTzugwzRIJSvzlHtqV4TuY7AAAAAAAAISy4JwmVZOM/azs12YOw0G1p2zN5K1F6iFjNQXL2SWrUKOmKGYdupJrmkWgj2tBtMny31CmgD2eBPbvoPykl3OWxrKMmsCe3fQflJLuctjWUAGc+X3vhorVsLxTGjAzny+98NFatheKYCv4mbIl3ztI+m8yfEMiZsiXfO0j6bzJ8BpkKZ7Jp8H3yl9lFzBTPZNPg++UvsoCmYAAAAAAC4GxoRhInVcQFyu9Dwb1rfmKeLb/tBT8Wd2OKM6FjHO4JRkRREhcUWnbUh9mxfMpR+YBfsAAAAAAAAAAAABlflPxvT+UFWz+dnZs1cYve/4uzdv7ojcekxTjTmOJ1VTAzMzip1GPGZ205zy1cGjhHmwAdqhN3Eh1lD8qkcUdqhN3Eh1lD8qkBr8AAAAAAAAAAAAAAAAAAAAAAAAAAAAACGctrexVd6Fz1gZmjTLLa3sVXehc9YGZoANf6E3ESHVsPySRkANf6E3ESHVsPySQHjMqje81rq1XGSMsxqZlUb3mtdWq4yRlmAvpsbsYS8KKigLpuzPTeMrHfs2Gi29r+bFpBTvYz4w1y6uYAzOzT0E8ks788nyOxf9hfULiAMgq+gyl1dVBLytaFmcSyVjMy7F1RbZ+IcQe+yjIM4HHmuWTJRZ08intJkf4xw18H7Q8CA9ngT276D8pJdzlsayjJrAnt30H5SS7nLY1lABxq73ET7VsRySh2Rxq73ET7VsRySgGQAkDJw7fdD67huUIR+JAycO33Q+u4blCAasAAAAyMxWUleKNWLQolJVO4wyMjuRl0dY1zGP1bOIdrOdutqJSFzGIUlRcJG4qxgOQLzbGvuHq3WTPJCjIvNsa+4erdZM8kAbJRuHpLWT3JCjIvNslG4ektZPckKMgA1MyV97zRWrU8ZQyzGpmSvveaK1anjKASYAAAAAAImyv5TNZ5k7VRK5JLI2Zx7/SnQoWDYU865mxbKjzUJIzOySMzsW0RmM8+pPin3tKz/AHFE/wCwaygAypkWCOLk5j24OGw7qRha1EnPjIByFbK/Ca3SSki8Nxe7JcwLgMIpC7Fx7jMfVMwbJMbFIK6GUXv0FozIjzb2Mz0GoyLaIiIpoAAAAAAAAAUT2SKeJi8Q6ap5C873Oli4lZEehKn3LW8dmUn5yF7DMiK5nYiGU+UVWCa7xoqWomHeiwbkWbEGoj0Gw0RNtqLuZxJJXjUYCPxbPY1929W6tZ5UVMFs9jX3b1bq1nlQF5QAAFZtkd7SEm8pGObRIoAL/wCyO9pCTeUjHNokUAAAAAE35FFctUVjjAMxr3QpdPWzlj6jPQlazI2lf+olKb8BLUY0pGNCTNKiUkzIyO5GXANLskrGGGxQoFqFmMUn+VEpbSzMWlGWc+ktCYgi4SV+V3FX2iNNwmkAAAAAAAAAAAAAAAAB802mEFKZXFzSYxCIaCg2VvxDy/ettoI1KUfgIiMx9Ipfl342MxCHcK6XjEuISsjnsQ0q5XSdyhiMu4ZEa/CRJ/OIBWnGut4jEXE+d1a8S0NRkQZQrSttphJZrSfGSSK/hMz4R40AAezwJ7d9B+Uku5y2NZRk1gT276D8pJdzlsaygAzny+98NFatheKY0YGc+X3vhorVsLxTAV/EzZEu+dpH03mT4hkTNkS752kfTeZPgNMhTPZNPg++UvsouYKZ7Jp8H3yl9lAUzAAAAAAAT3kFRvSuUXLWM63TkBFM2zrXs2bnn95tewQIJYyQIw4HKRo18r9lFOs6CI/xjDjf+oBqAAAAAAAAAAAPzinkQ0M7EOXzGkGtVtuxFcx+g81itGFLsLqsmB2tCyWMeO5GZdiws9ovEAyQiXlxES7EOWz3VmtVi4TO5j8wAAHaoTdxIdZQ/KpHFHaoTdxIdZQ/KpAa/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAhnLa3sVXehc9YGZo0yy2t7FV3oXPWBmaADX+hNxEh1bD8kkZADX+hNxEh1bD8kkB4zKo3vNa6tVxkjLMamZVG95rXVquMkZZgLZ7GtF5lbVbAZ346WsvWtt5jplt/2gvKM+djtjOl8dI6HNREUVIX2yI1WuZOsr0FwnZJ+a40GAZkZZ8H0llK1agk2S65DvJPNtfPhmlGfzmZX8Ah4WD2QCCKFyg3XyK3Tkqhnj29Ns5v/wAYr4A9ngT276D8pJdzlsayjIPD+dopqvKfqNxvoqJVNIaNUj84mnUrt580a7QEXDR8CxHQbyH4aIaS6y6g7pWhRXSoj7hkZGA/YfDUECqZyGYS1DhNqi4V1glmVySa0Gm9vOPuABj7WNOzWkqomNNzyH6XmMufUw+i9yuW0ZHwpMrGR8JGRiRskSl5tUuPdNLl0O4tiVxaJhGvEm6GWmzzuyPgzjIkl4VeMaGV3hfh/XT6Iiq6UlsziUESUxC2zQ9mltJ6IgyUZeC9h1aOpKmaOlhy2lpFASiFUrOWiFZJGer85R7aj8JmZgO2AAA/CYRTUDAREbEHZmHaU64fcSkjM/qIY5xTy4mKdiHLZ7qzWq21czuY00ywqzaozAefLS8SI6btHK4RN9KlPEZLMu5Zvoh37pEMxgAXm2NfcPVusmeSFGRebY19w9W6yZ5IA2SjcPSWsnuSFGRebZKNw9Jaye5IUZABqZkr73mitWp4yhlmNTMlfe80Vq1PGUAkwAAAAAAAAAAAAAAAAAAcWuKqkVF0vG1JUcc3BS6DRnOLVtqPgQkvylGegiLbMBFuWRiY3h7hJFwkHEZk8nyVwMClKrLbSZWde8Gak7Ef5ykjNMe9x2xMmuKuIEVUswJTEMRdBl8JnXKGhyMzSnwqO5mo+EzPaKxF4IAFs9jX3b1bq1nlRUwWz2NfdvVurWeVAXlAAAVm2R3tISbykY5tEigA2YABjOA2YABjOO/h/WFQUJVUJUtNRyoSPhVaD20OIP3za0/lIPhL/IyIxwAAaf5P+O1KYsSttlh5uW1G23eKlTrhZ+jbW0Z/jEeEtJcJFovLIxtgoqKgYxqMgol6FiWVktp5lZoWhRbRpUWkj8JCy+EeWHWNOtty6uIFNUQKSJKYpKiZjEF4TtmuaO6RGfCowF+wEQUJlJ4QVY22luqmZPFK24abl0spPgzz/Bn5lGJXl8dBTGFTFy+Mh4uHX711hwloPxGWgB9AAAAADnz2eSSQwhxk8nEvlcMW29GRKGUF/wByjIgHQH8UZJSalGRERXMz4BAuIeVhhTTCHGZVHRFTxybkTUubs1fwvLsm3hTnCpONeUfX+Jbb0tN9MhkLlyOXQKz/AAqe46575zxdin9UBPuVHlSQUoh4qj8Mo9uLmayNqMnDR5zUKW0aWVbS3P1y7FPBc/e0ddWt1xTrq1LWszUpSjuajPbMz7o/yAAAAA9ngT276D8pJdzlsayjJHB+YQUpxao6azGIRDQUHPoGIiHl+9bbQ+hSlH4CIjMaRdX7BvvhSX11ewBJgzny+98NFatheKYuZ1fsG++FJfXV7BRvLMqeQVfjbETmmprDzSXqgIdsn2DM0mpKTuWnuAIXEzZEu+dpH03mT4hkSnknT+TUvlAU1PagmLMulkN010aJeOyEZ0I8hN/GpSS84DUUeZrqgKNrnpP+V1PQU46Sz+lumEmfQs/Nz7WPhzE/MQ8z1fsG++FJfXV7A6v2DffCkvrq9gB1AcG+97JfUV7Q6gODfe9kvqK9odX7BvvhSX11ewOr9g33wpL66vYAdQHBvveyX1Fe0OoDg33vZL6ivaHV+wb74Ul9dXsDq/YN98KS+ur2AMyKwh2YSrZxCwzaWmGY99ttCdpKScUREXiIh38CIwoDGyiItVs1E+giWZkZ2SbyCM9HgMxwKwiGYurZxFQziXWHo99xtadpSTcUZGXjIx/ilo0pbU0qmJqzShY1l+97WzVkrb4NoBsMAjPq/YN98KS+ur2B1fsG++FJfXV7AEmAIz6v2DffCkvrq9gdX7BvvhSX11ewBJgCM+r9g33wpL66vYHV+wb74Ul9dXsASYI2yoY3pDJ8rZ/OJOdKnGbnf+cs3wftD/HV+wb74Ul9dXsEU5WmMmHVR4C1BIqZrCXTGZRqoZCGGHFZ5pTENrVbRpLNSd/AZgKEgAAA7VCbuJDrKH5VI4o6tHxDMJVsniolxLTDMew44tW0lJOJMzPxEQDYMBGfV+wb74Ul9dXsDq/YN98KS+ur2AJMARn1fsG++FJfXV7A6v2DffCkvrq9gCTAEZ9X7BvvhSX11ewOr9g33wpL66vYAkwBGfV+wb74Ul9dXsDq/YN98KS+ur2AJMARn1fsG++FJfXV7A6v2DffCkvrq9gCTAEZ9X7BvvhSX11ewOr9g33wpL66vYAkwBGfV+wb74Ul9dXsDq/YN98KS+ur2AJMARn1fsG++FJfXV7A6v2DffCkvrq9gCTAEZ9X7BvvhSX11ewOr9g33wpL66vYA4uW1vYqu9C56wMzRfnKxxew0qjJ/qWRU/WUsmMzielegwzKzNa82LZWq2jgSlR+YUGABr/Qm4iQ6th+SSMgBpvR+O2EMJSUnhYmvpO0+zAMNuIUtV0qJtJGR6OAyAdXKo3vNa6tVxkjLMaHZRGM2Fs/wSquTSatpVGzCLgFNsMNLUanFZxaC0DPEBOWQtFnDZSchZJRl03DxbJ2IjvaHWvze8Gkwyrya5/L6XxypaezaMZg4CFi1dMPumZJbQptaDM7ftDQjq/YN98KS+ur2AKs7JHB5mKdOR9vx0kJm9/zH3T2v7QVZFoMvit6KreMo+KpGooOcLhm4xuKKHUZ9CIzZNF7kW32fzCr4ALr5DeOsI5LYXC2rYxLMUyfQ5HFOqsl1B7UMoz2lEfvO6R5ugySSqUD+oUpCyWhRpUk7kZHYyMBsuAoxgLleTCRQjEhxLYipvBtkSGpsxZUS2naInUmZdEL9a5K7ucYtpROKuHVZstrpysJRGOOFcoc4gm4gvG0uyy+YB7MAH8cWhtCnHFJQhJGalKOxERcJgP6PxjoqGgYN6NjYhqGhmG1OPPOrJKG0JK5qUZ6CIiK9zEZYkZQGFdCsupmNTw0xjkaOkZWool4z7h5p5qD/bUkUkyhMoiq8VjVKWm/cSmUrzky9lzOU+ZbSnl6M7ukkiJJaNBmVwH+MrPGDqr16n3LW4mm5SSmZclRGk3jMyz3zI9JGqxERHtJSW0ZmIYAAAXm2NfcPVusmeSFGRbvIOxHoaiKSqSFqypYGUPxMe04yiIUZGtJN2MysXdAer2SjcPSWsnuSFGRbvLxxHoat6SpuFpOpYGbvw0e648iHUZmhJt2IzuXdFRAAamZK+95orVqeMoZZjQ7J3xmwtkGCVKSac1tKoKYQkAlt9h1aiU2rOPQegBYoBGfV+wb74Ul9dXsDq/YN98KS+ur2AJMARn1fsG++FJfXV7A6v2DffCkvrq9gCTAEZ9X7BvvhSX11ewOr9g33wpL66vYAkwBGfV+wb74Ul9dXsH4xeUNgvCsm87iBK1JLgaS44r1UpM/qASkArpVOWJhPK0LTKETufO6czpeE6C2Z+FTppUReJJn4BBGJWWJX9QNOQdKQEHS0KsjLoqD6YijL9tRElPmRcuAwFycXMVqLwvk5x1TzRCIhaTOGgGTJcTEn+qi+1+sdkl3Rnfj/jRUuLs/RETH/gZPCqPpCWNLM0NX/LUf5bhl+VwbREWm8dTaYzCbTB6YzWOiY6NfVnOxEQ6pxxw+6pSjMzMfKAAAAAtnsa+7erdWs8qKmCyOQdW9J0RVtSxVWT2ElDETANNsriFGRLUTlzIrF3AGg4CM+r9g33wpL66vYHV+wb74Ul9dXsASYAjPq/YN98KS+ur2B1fsG++FJfXV7AEmAIz6v2DffCkvrq9gdX7BvvhSX11ewBlmAAAAAAA+uVzOZSuIKIlkwi4F4tpyHeU2r50mRgACVsOMScRXYWKQ7X1VOJbNBIJU4iDJJWPQXZ6BPU6q+rG5PGuN1RO0LTDuGlSY90jIySekuyAAFdMSMSMRDmTcKde1T0BUOk1Ne67+YZ5ytJln2EaxkVExkQqIi4h6IeWd1OOrNSj8ZnpAAH4gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADry6qKllqUJl1RTeDJHvCYjXGyTotosZW0D8ZpPZ3NU5sznMxjk3M7REStwrnpM+yMwABzgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//Z" alt="Silverside" class="topbar-logo">
+  <div class="topbar-right">
+    <span class="client-label">SVEDKA</span>
+    <div class="tier-pill" id="tier-pill-display">MOMENTUM &nbsp;·&nbsp; <b>444 cr / mo</b> &nbsp;·&nbsp; <b>$50,000</b></div>
+    <button class="lock-btn" onclick="openPin()" title="Admin login" id="admin-lock-btn">&#9679;&#9679;&#9679;</button>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="nav-tab active"  onclick="go(this,'overview')">Overview</div>
+  <div class="nav-tab"         onclick="go(this,'projects')">Projects</div>
+  <div class="nav-tab"         onclick="go(this,'timeline')">Timeline</div>
+  <div class="nav-tab"         onclick="go(this,'menu')">Deliverable Menu</div>
+  <div class="nav-tab admin-only" data-panel="settings" onclick="go(this,'settings')" style="margin-left:auto;color:var(--blue)">&#9881; Settings</div>
+</nav>
+
+<main class="page">
+
+<!-- ═══ OVERVIEW ═══ -->
+<div class="panel active" id="panel-overview">
+
+  <!-- Top bar: title + add button -->
+  <div class="title-row" style="margin-bottom:28px">
+    <div>
+      <div class="page-title">Credit Overview</div>
+      <div class="page-sub" style="margin-top:5px">Momentum &nbsp;·&nbsp; $112.50 per credit &nbsp;·&nbsp; 3-month minimum</div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal()">+ Add ask</button>
+  </div>
+
+  <!-- Hero utilization block -->
+  <div id="ov-hero"></div>
+
+  <!-- Month toggle + project list -->
+  <div style="margin-top:32px">
+    <div class="month-toggle-hdr">
+      <span class="section-title">Monthly view</span>
+      <div class="m-tabs" id="m-tabs"></div>
+    </div>
+    <div class="month-card" id="month-card"></div>
+  </div>
+
+</div>
+
+<!-- ═══ PROJECTS ═══ -->
+<div class="panel" id="panel-projects">
+  <div class="title-row">
+    <div><div class="page-title">Projects</div><div class="page-sub" style="margin-top:5px">All deliverables in the log</div></div>
+    <button class="btn btn-primary" onclick="openModal()">+ Add ask</button>
+  </div>
+  <div class="proj-hdr">
+    <span>Project</span><span>Deliverable</span><span>Workstream</span>
+    <span style="text-align:right">Credits</span><span style="text-align:right">Value</span>
+    <span>Status</span><span>By</span><span></span>
+  </div>
+  <div id="proj-list-wrap" class="proj-list-wrap"></div>
+</div>
+
+<!-- ═══ TIMELINE ═══ -->
+<div class="panel" id="panel-timeline">
+  <div class="title-row">
+    <div><div class="page-title">Timeline</div><div class="page-sub" style="margin-top:5px">Bar width reflects deliverable duration &nbsp;·&nbsp; hover for details</div></div>
+  </div>
+  <div class="gantt-wrap" id="gantt-wrap"></div>
+</div>
+
+<!-- ═══ MENU ═══ -->
+<div class="panel" id="panel-menu">
+  <div class="title-row">
+    <div><div class="page-title">Deliverable Menu</div><div class="page-sub" style="margin-top:5px">All credits at $112.50 each &nbsp;·&nbsp; click any item to add it</div></div>
+  </div>
+  <div id="menu-body"></div>
+  <div style="margin-top:24px;font-family:var(--mono);font-size:10px;color:var(--muted);line-height:2;border-top:1px solid var(--border);padding-top:16px;">
+    Rush orders (timeline compressed &gt;50%) = 1.5x credits &nbsp;·&nbsp; Revision overages = 2x credits &nbsp;·&nbsp; Carryover: up to 20% (max 89 cr) rolls to next month
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div class="panel" id="panel-settings">
+  <div class="title-row" style="margin-bottom:28px">
+    <div>
+      <div class="page-title">Settings</div>
+      <div class="page-sub" style="margin-top:5px">Edit client details, tier pricing and deliverable credits</div>
+    </div>
+    <button class="btn btn-primary" onclick="saveSettings()">Save changes</button>
+  </div>
+
+  <div class="settings-grid">
+    <div class="settings-section">
+      <div class="settings-section-hdr">Client &amp; tier</div>
+      <div class="settings-body">
+        <div class="settings-field">
+          <label class="settings-label">Client name</label>
+          <input class="settings-input" id="s-client" value="SVEDKA">
+        </div>
+        <div class="settings-field">
+          <label class="settings-label">Tier name</label>
+          <input class="settings-input" id="s-tier" value="MOMENTUM">
+        </div>
+        <div class="settings-field">
+          <label class="settings-label">Monthly credits</label>
+          <input class="settings-input" id="s-credits" type="number" value="444">
+        </div>
+        <div class="settings-field">
+          <label class="settings-label">Credit rate ($)</label>
+          <input class="settings-input" id="s-rate" type="number" value="112.50" step="0.01">
+        </div>
+        <div class="settings-field">
+          <label class="settings-label">Monthly investment ($)</label>
+          <input class="settings-input" id="s-monthly" type="number" value="50000">
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-hdr">Admin PIN</div>
+      <div class="settings-body">
+        <div class="settings-field">
+          <label class="settings-label">Change PIN</label>
+          <input class="settings-input" id="s-pin-new" type="password" placeholder="New PIN (4–6 digits)" maxlength="6">
+        </div>
+        <div class="settings-field">
+          <label class="settings-label">Confirm PIN</label>
+          <input class="settings-input" id="s-pin-confirm" type="password" placeholder="Confirm new PIN" maxlength="6">
+        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;">Leave blank to keep current PIN.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:16px">
+    <div class="section-title" style="margin-bottom:16px">Deliverable prices</div>
+    <div class="deliverable-edit-table" id="deliverable-edit-table"></div>
+  </div>
+</div>
+
+</main>
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal-bg" id="modal-bg" onclick="bgClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">Add a new ask</div>
+      <button onclick="closeModal()" style="font-size:20px;line-height:1;cursor:pointer;background:none;border:none;color:var(--muted);padding:0 4px;">&#215;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field field-row">
+        <div>
+          <label class="field-label">Project name</label>
+          <input class="field-input" id="f-name" placeholder="e.g. Summer campaign hero video">
+        </div>
+        <div>
+          <label class="field-label">Submitted by</label>
+          <input class="field-input" id="f-submitter" placeholder="Your name">
+        </div>
+      </div>
+      <div class="field field-row">
+        <div>
+          <label class="field-label">Category</label>
+          <select class="field-select" id="f-cat" onchange="onCatChange()">
+            <option value="">— select category —</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Deliverable</label>
+          <select class="field-select" id="f-deliv" onchange="onDelivChange()">
+            <option value="">— select deliverable —</option>
+          </select>
+        </div>
+      </div>
+      <div class="deliv-note" id="deliv-note"></div>
+      <div id="scope-row" style="display:none" class="field">
+        <div id="scope-inner" class="field-row3"></div>
+      </div>
+      <div id="complexity-row" style="display:none" class="field">
+        <label class="field-label">Complexity tier</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="ct-grid">
+          <div class="addon-item" id="ct-templated" onclick="setCT('templated')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">Templated</div><div class="addon-note">−30% credits &amp; cost</div></div></div>
+          <div class="addon-item sel" id="ct-standard" onclick="setCT('standard')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">Standard</div><div class="addon-note">Base rate</div></div></div>
+          <div class="addon-item" id="ct-premium" onclick="setCT('premium')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">Premium</div><div class="addon-note">+30% credits &amp; cost</div></div></div>
+        </div>
+      </div>
+      <div id="social-row" style="display:none" class="field">
+        <label class="field-label">Social add-ons <span class="field-hint">(select multiple)</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="social-grid">
+          <div class="addon-item" id="sf-none" onclick="setSF('none')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">None</div><div class="addon-note">No social add-on</div></div></div>
+          <div class="addon-item" id="sf-cutdowns" onclick="setSF('cutdowns')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">Social cutdowns</div><div class="addon-note">+7 cr (~$788) — 1 cutdown cut from the hero asset</div></div></div>
+          <div class="addon-item" id="sf-variants" onclick="setSF('variants')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">Social variants</div><div class="addon-note">+14 cr (~$1,575) — 1–2 net-new short videos, original social-first content</div></div></div>
+          <div class="addon-item" id="sf-nativepack" onclick="setSF('nativepack')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">Native social pack</div><div class="addon-note">+25% of base — full native reworks for IG, TikTok, YT Shorts</div></div></div>
+          <div class="addon-item" id="sf-fullsuite" onclick="setSF('fullsuite')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">Full social suite</div><div class="addon-note">+40% of base — cutdowns + native + story variants + captions</div></div></div>
+        </div>
+      </div>
+      <div id="addons-section" style="display:none">
+        <span class="modal-section-label">Add-ons</span>
+        <div class="addon-grid" id="addon-grid"></div>
+      </div>
+      <span class="modal-section-label">Scheduling &amp; logistics</span>
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">Funnel stage</label>
+        <div class="funnel-row">
+          <div class="funnel-item sel" id="fn-full" onclick="setFunnel('full')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">Full Funnel</div><div class="addon-note">End-to-end across all stages</div></div></div>
+          <div class="funnel-item" id="fn-mid" onclick="setFunnel('mid')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">Mid-Funnel</div><div class="addon-note">Awareness &amp; consideration</div></div></div>
+          <div class="funnel-item" id="fn-low" onclick="setFunnel('low')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div><div class="addon-name">Low Funnel</div><div class="addon-note">Conversion &amp; retargeting</div></div></div>
+        </div>
+      </div>
+      <div class="field field-row">
+        <div>
+          <label class="field-label">Workstream</label>
+          <select class="field-select" id="f-ws">
+            <option>Creative Dev &amp; Strategy</option>
+            <option>Production Excellence</option>
+            <option>Innovation &amp; Future</option>
+            <option>Flex / Ad Hoc</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Month</label>
+          <select class="field-select" id="f-month"></select>
+        </div>
+      </div>
+      <div class="field field-row">
+        <div>
+          <label class="field-label">Start week <span class="field-hint">within the month (1–4)</span></label>
+          <select class="field-select" id="f-startweek">
+            <option value="0">Week 1</option>
+            <option value="1">Week 2</option>
+            <option value="2">Week 3</option>
+            <option value="3">Week 4</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Status</label>
+          <select class="field-select" id="f-status">
+            <option>Active</option><option>Pending approval</option>
+            <option>Completed</option><option>On hold</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+          <label class="field-label">Rush order?</label>
+          <select class="field-select" id="f-rush" onchange="onRushChange()">
+            <option value="no">No</option>
+            <option value="yes">Yes — 1.5x multiplier</option>
+          </select>
+      </div>
+      <div class="rush-note" id="rush-note">Rush multiplier active — credits calculated at 1.5x</div>
+      <div class="field">
+        <label class="field-label">Override credits <span class="field-hint">(optional — bypasses all calculations)</span></label>
+        <input class="field-input" id="f-override" type="number" min="1" placeholder="Leave blank to use calculated price" oninput="updatePreview()">
+      </div>
+      <div class="credit-preview">
+        <div style="flex:1;">
+          <div class="cp-label">Credits required</div>
+          <div class="cp-meta" id="cp-meta">Select a category and deliverable above</div>
+          <div id="cp-bd" style="display:none;margin-top:12px;"></div>
+        </div>
+        <div class="cp-right">
+          <div class="cp-credits" id="cp-credits">—</div>
+          <div class="cp-val" id="cp-val"></div>
+          <div class="cp-rem" id="cp-rem"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveProject()">Add to log</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL = 444, RATE = 112.5;
+const MONTH_NAMES = ['June','July','August','September','October','November'];
+const WS = [
+  {name:'Creative Dev & Strategy', rec:178},
+  {name:'Production Excellence',   rec:155},
+  {name:'Innovation & Future',     rec:67},
+  {name:'Flex / Ad Hoc',           rec:44},
+];
+const CAT_COLOR = {
+  'Video & Film':          '#F0F0F2',
+  'Social Content':        '#2E5BFF',
+  'Static & Display':      '#3D3D4A',
+  'Systems & Automation':  '#F0A030',
+  'Brand Vault':           '#8B60F8',
+  'Strategy & Innovation': '#18C0A8',
+};
+const CAT_TEXT = {
+  'Video & Film':          '#0C0C0E',
+  'Social Content':        '#fff',
+  'Static & Display':      '#F0F0F2',
+  'Systems & Automation':  '#0C0C0E',
+  'Brand Vault':           '#fff',
+  'Strategy & Innovation': '#0C0C0E',
+};
+
+const CATALOGUE = {
+  'Video & Film': {
+    ws:'Production Excellence', showFormats:true, showVersions:false,
+    showDuration:true, showComplexity:true, showSocial:true,
+    items:[
+      {name:'Hero Video',              credits:200, value:22500, timeline:'4 weeks',   revisions:'3 rounds', dur:4,
+       note:'Concept, script, AI production pipeline, editorial, VFX, colour & mastering. 1 format = 1 hero + 4 aspect ratios.'},
+      {name:'Brand Anthem / Manifesto',credits:324, value:36450, timeline:'4–5 weeks', revisions:'3 rounds', dur:5,
+       note:'Full narrative development, voiceover direction, motion design & finishing. 1 hero + 4 aspect ratios.'},
+      {name:'Long-Form Brand Film',    credits:280, value:31500, timeline:'5–6 weeks', revisions:'3 rounds', dur:6,
+       note:'Documentary, brand story or deep-dive format. Full editorial & finishing.'},
+      {name:'Social-First Video Series',credits:160,value:18000, timeline:'4–5 weeks', revisions:'2 rounds', dur:5,
+       note:'3-episode social series. Consistent format, branding and editorial approach.'},
+      {name:'Product Demo Video',      credits:95,  value:10688, timeline:'2–3 weeks', revisions:'2 rounds', dur:3,
+       note:'Clean product showcase. Feature highlights, UI walkthroughs or unboxing format.'},
+    ],
+    addons:[
+      {id:'vo',    name:'Voiceover direction',   cr:20, note:'Casting, direction, sync & final mix'},
+      {id:'music', name:'Music licensing',        cr:15, note:'Stock or sync licence sourcing & clearance'},
+      {id:'vfx',   name:'VFX upgrade',            cr:35, note:'Advanced compositing, motion tracking & CGI elements'},
+      {id:'color', name:'Premium colour grade',   cr:18, note:'Full DI colour pipeline with colourist'},
+      {id:'subs',  name:'Subtitle / caption pack',cr:8,  note:'Burnt-in or SRT for all deliverables'},
+      {id:'bts',   name:'Behind-the-scenes cut',  cr:22, note:'Social-ready BTS edit from existing footage'},
+      {id:'src',   name:'Working files handoff',  cr:80, note:'All source files, project folders & assets'},
+    ]
+  },
+  'Social Content': {
+    ws:'Production Excellence', showFormats:true, showVersions:true,
+    showDuration:true, showComplexity:true, showSocial:false,
+    items:[
+      {name:'Social Video — Complex',        credits:89,  value:10013, timeline:'1–2 weeks', revisions:'2 rounds', dur:2,
+       note:'Original concept, narrative structure, motion design or creative editing.'},
+      {name:'Social Video — Simple',         credits:31,  value:3488,  timeline:'3–5 days',  revisions:'1 round',  dur:1,
+       note:'Fast-turn content produced from existing brand assets.'},
+      {name:'Reactive / Trend Video',        credits:102, value:11475, timeline:'3–5 days',  revisions:'1 round',  dur:1,
+       note:'Rush-ready reactive format for trend-jacking or cultural moment response.'},
+      {name:'Lifestyle Image Suite',         credits:60,  value:6750,  timeline:'2 weeks',   revisions:'2 rounds', dur:2,
+       note:'Set of 5 cohesive lifestyle or product images with consistent art direction.'},
+      {name:'Paid Social Suite — All Platforms',credits:28,value:3150, timeline:'3–5 days',  revisions:'1 round',  dur:1,
+       note:'Facebook, Instagram, TikTok, Pinterest — all sizes in one pass.'},
+      {name:'Email Header / Banner',         credits:6,   value:675,   timeline:'1–2 days',  revisions:'1 round',  dur:0.5,
+       note:'Single email header or promotional banner design.'},
+      {name:'Social Static Suite',           credits:7,   value:788,   timeline:'1–2 days',  revisions:'1 round',  dur:0.5,
+       note:'1 format = 1 hero + 4 aspect ratios.'},
+    ],
+    addons:[
+      {id:'cut',   name:'Additional edit cut',        cr:12, note:'Per extra version of the same edit'},
+      {id:'cap',   name:'Caption / subtitle burn-in', cr:5,  note:'Per video delivered'},
+      {id:'music', name:'Music licensing',            cr:15, note:'Stock sync licence sourcing'},
+      {id:'trans', name:'Translation / localisation', cr:18, note:'Per additional language'},
+      {id:'dark',  name:'Dark mode variant',          cr:6,  note:'Per asset type'},
+    ]
+  },
+  'Static & Display': {
+    ws:'Production Excellence', showFormats:false, showVersions:true,
+    showDuration:false, showComplexity:false, showSocial:false,
+    items:[
+      {name:'Hero Campaign Static Suite',    credits:80,  value:9000,  timeline:'3 weeks',   revisions:'3 rounds', dur:3,
+       note:'5 formats per suite. Key art, headlines & brand system across all sizes.'},
+      {name:'Banner Ad Set — Static',        credits:12,  value:1350,  timeline:'2–3 days',  revisions:'1 round',  dur:1,
+       note:'Standard IAB sizes. One creative direction.'},
+      {name:'Banner Ad Set — Light Motion',  credits:16,  value:1800,  timeline:'3–5 days',  revisions:'1 round',  dur:1,
+       note:'Subtle animation on the static banner set.'},
+      {name:'Programmatic Display Suite',    credits:20,  value:2250,  timeline:'2–3 days',  revisions:'1 round',  dur:1,
+       note:'Full IAB set: 300x250, 728x90, 160x600, 320x50 and more.'},
+      {name:'OOH / DOOH Static',             credits:24,  value:2700,  timeline:'1–2 weeks', revisions:'2 rounds', dur:2,
+       note:'Out-of-home and digital OOH static formats.'},
+      {name:'OOH / DOOH Animated',           credits:40,  value:4500,  timeline:'1–2 weeks', revisions:'2 rounds', dur:2,
+       note:'Looping animated creative for digital OOH screens.'},
+      {name:'Retargeting Ad Set',            credits:18,  value:2025,  timeline:'2–3 days',  revisions:'1 round',  dur:1,
+       note:'Conversion-focused lower-funnel creative set.'},
+      {name:'Landing Page Design',           credits:35,  value:3938,  timeline:'1 week',    revisions:'2 rounds', dur:2,
+       note:'Full responsive landing page design. Figma or dev-ready handoff.'},
+      {name:'CRM / Email Template',          credits:14,  value:1575,  timeline:'2–3 days',  revisions:'1 round',  dur:1,
+       note:'Modular email template — coded HTML or design-only.'},
+    ],
+    addons:[
+      {id:'dark',  name:'Dark mode variant',          cr:6,  note:'Per asset type'},
+      {id:'ab',    name:'A/B variant',                cr:8,  note:'Second creative direction per asset'},
+      {id:'trans', name:'Translation / localisation', cr:18, note:'Per additional language'},
+      {id:'anim',  name:'Animation upgrade',          cr:10, note:'Add light motion to any static set'},
+    ]
+  },
+  'Systems & Automation': {
+    ws:'Innovation & Future', showFormats:false, showVersions:false,
+    showDuration:false, showComplexity:false, showSocial:false,
+    items:[
+      {name:'Template System',              credits:533, value:59963, timeline:'6–8 weeks', revisions:'—', dur:8,
+       note:'Built once, reused forever. Covers all asset types. Includes documentation & training.'},
+      {name:'AI Workflow — Standard',       credits:89,  value:10013, timeline:'3–4 weeks', revisions:'—', dur:4,
+       note:'Single-pipeline automation, e.g. image gen, copy generation or asset resizing.'},
+      {name:'AI Workflow — Complex',        credits:267, value:30038, timeline:'6–8 weeks', revisions:'—', dur:8,
+       note:'Multi-step pipeline with conditional logic, API integrations & QA layer.'},
+      {name:'Brand Brain Setup',            credits:120, value:13500, timeline:'3–4 weeks', revisions:'—', dur:4,
+       note:'Brand knowledge base, tone-of-voice training & AI prompt system.'},
+      {name:'Content Pipeline Automation',  credits:180, value:20250, timeline:'4–6 weeks', revisions:'—', dur:6,
+       note:'End-to-end brief-to-output automation across briefing, production & distribution.'},
+      {name:'Analytics Dashboard',          credits:95,  value:10688, timeline:'3–4 weeks', revisions:'—', dur:4,
+       note:'Custom content performance dashboard connected to existing data sources.'},
+    ],
+    addons:[
+      {id:'train', name:'Team training session', cr:15, note:'Half-day onboarding for the system or workflow'},
+      {id:'docs',  name:'Documentation package', cr:12, note:'Full written & video docs for internal use'},
+      {id:'maint', name:'Monthly maintenance',   cr:20, note:'Ongoing support, updates & monitoring (per month)'},
+    ]
+  },
+  'Brand Vault': {
+    ws:'Creative Dev & Strategy', showFormats:false, showVersions:false,
+    showDuration:false, showComplexity:true, showSocial:false,
+    items:[
+      {name:'Micro-Trend Concept',           credits:15,  value:1688,  timeline:'Rapid',      revisions:'1 round',  dur:0.5,
+       note:'Rapid reactive idea for social or culture-jacking. Core narrative & visual direction.'},
+      {name:'Core Campaign Concept',         credits:45,  value:5063,  timeline:'1–2 weeks',  revisions:'2 rounds', dur:2,
+       note:'1 script, 5–8 AI styleframes, strategic hook. Ready to RFP or produce.'},
+      {name:'Large Scale Activation',        credits:70,  value:7875,  timeline:'2–3 weeks',  revisions:'2 rounds', dur:3,
+       note:'Full conceptual map for live events, experiential or hybrid productions.'},
+      {name:'Multi-Platform Campaign',       credits:90,  value:10125, timeline:'2–3 weeks',  revisions:'2 rounds', dur:3,
+       note:'Full campaign idea with platform-by-platform execution plan & channel strategy.'},
+      {name:'Brand Positioning Workshop',   credits:55,  value:6188,  timeline:'1 week',     revisions:'2 rounds', dur:1,
+       note:'Facilitated session + written positioning output. Includes prep & debrief doc.'},
+    ],
+    addons:[
+      {id:'sf',    name:'Additional styleframes',     cr:10, note:'+5 AI styleframes per pack'},
+      {id:'sb',    name:'Full storyboard',            cr:20, note:'Scene-by-scene production breakdown'},
+      {id:'copy',  name:'Copy platform',              cr:25, note:'Headlines, taglines & tone-of-voice guide'},
+      {id:'rfp',   name:'RFP Blueprint',              cr:15, note:'Production-ready brief for external vendors'},
+    ]
+  },
+  'Strategy & Innovation': {
+    ws:'Creative Dev & Strategy', showFormats:false, showVersions:false,
+    showDuration:false, showComplexity:false, showSocial:false,
+    items:[
+      {name:'Quarterly Creative Strategy',  credits:67,  value:7538,  timeline:'2 weeks',    revisions:'2 rounds', dur:2,
+       note:'Full-quarter plan: themes, priorities, platform mix & success metrics.'},
+      {name:'Trend & Culture Report',       credits:30,  value:3375,  timeline:'1 week',     revisions:'1 round',  dur:1,
+       note:'Cultural intelligence report with brand-relevant opportunities identified.'},
+      {name:'Competitive Creative Audit',   credits:40,  value:4500,  timeline:'1–2 weeks',  revisions:'1 round',  dur:2,
+       note:'Side-by-side analysis of competitor creative, positioning & content strategy.'},
+      {name:'Campaign Brief',               credits:22,  value:2475,  timeline:'3–5 days',   revisions:'2 rounds', dur:1,
+       note:'Fully written campaign brief from input session to polished final document.'},
+      {name:'Creative Innovation Sprint',   credits:80,  value:9000,  timeline:'2 weeks',    revisions:'2 rounds', dur:2,
+       note:'Dedicated R&D to explore new formats, platforms or creative territory.'},
+      {name:'Channel Strategy',             credits:35,  value:3938,  timeline:'1 week',     revisions:'1 round',  dur:1,
+       note:'Channel-by-channel strategy with format recommendations & posting cadence.'},
+      {name:'Monthly Performance Review',   credits:18,  value:2025,  timeline:'3–5 days',   revisions:'1 round',  dur:1,
+       note:'Content performance analysis with data-backed creative recommendations.'},
+      {name:'Brand Voice & TOV Guide',      credits:50,  value:5625,  timeline:'1–2 weeks',  revisions:'2 rounds', dur:2,
+       note:'Tone-of-voice guide with examples, dos/don\'ts & channel adaptations.'},
+    ],
+    addons:[
+      {id:'ws',    name:'Client workshop',     cr:20, note:'Half-day facilitated strategy session'},
+      {id:'exec',  name:'Executive summary',   cr:10, note:'1-page stakeholder distillation'},
+      {id:'deck',  name:'Presentation deck',   cr:15, note:'Designed slides of the strategy output'},
+    ]
+  },
+};
+
+let projects = [], nextId = 1, editId = null, activeMonth = 0;
+let activeCT = 'standard', activeSF = new Set(), activeFunnel = 'full', selectedAddons = new Set();
+
+const $ = id => document.getElementById(id);
+const fmtC = n => '$' + Math.round(n).toLocaleString();
+const totalUsed = () => projects.reduce((s,p) => s + p.credits, 0);
+const stClass = s => ({'Active':'active','Pending approval':'pending','Completed':'done','On hold':'hold'}[s]||'done');
+const getItem = (cat, n) => { const c = CATALOGUE[cat]; return c ? c.items.find(i=>i.name===n)||null : null; };
+
+// ── BUILD MONTH TABS ──────────────────────────────────────────────────────────
+(function buildMonthTabs(){
+  const el = $('m-tabs');
+  MONTH_NAMES.forEach((m, i) => {
+    const d = document.createElement('div');
+    d.className = 'm-tab' + (i===0?' active':'');
+    d.textContent = m;
+    d.onclick = () => setMonth(d, i);
+    el.appendChild(d);
+  });
+  // populate month select in modal
+  const sel = $('f-month');
+  MONTH_NAMES.forEach(m => {
+    const o = document.createElement('option'); o.value = o.textContent = m; sel.appendChild(o);
+  });
+})();
+
+// ── RENDER OVERVIEW ───────────────────────────────────────────────────────────
+function renderOverview() {
+  const alloc = totalUsed(), rem = TOTAL - alloc, pct = Math.round(alloc/TOTAL*100);
+  const rc  = rem < 0 ? 'red' : rem < 50 ? 'amber' : 'green';
+  const bc  = pct >= 90 ? 'red' : pct >= 75 ? 'amber' : '';
+  const barColor = bc === 'red' ? 'var(--red)' : bc === 'amber' ? 'var(--amber)' : 'var(--blue)';
+  const statusText = rem < 0 ? 'Over budget' : rem < 50 ? 'Near limit' : 'On track';
+
+  $('ov-hero').innerHTML = `
+    <div class="ov-hero">
+      <!-- Left: big utilization number -->
+      <div class="ov-pct-block">
+        <div class="ov-pct" style="color:${barColor}">${pct}%</div>
+        <div class="ov-pct-label">utilized</div>
+        <div class="ov-status" style="color:${barColor}">${statusText}</div>
+      </div>
+
+      <!-- Right: credit breakdown + bar -->
+      <div class="ov-detail">
+        <div class="ov-credit-row">
+          <div class="ov-cr-block">
+            <div class="ov-cr-num">${alloc}</div>
+            <div class="ov-cr-label">credits used</div>
+            <div class="ov-cr-sub">${fmtC(alloc*RATE)}</div>
+          </div>
+          <div class="ov-divider"></div>
+          <div class="ov-cr-block">
+            <div class="ov-cr-num" style="color:var(--${rc})">${rem}</div>
+            <div class="ov-cr-label">credits remaining</div>
+            <div class="ov-cr-sub">${fmtC(Math.max(0,rem)*RATE)}</div>
+          </div>
+          <div class="ov-divider"></div>
+          <div class="ov-cr-block">
+            <div class="ov-cr-num" style="color:var(--sub)">${TOTAL}</div>
+            <div class="ov-cr-label">monthly budget</div>
+            <div class="ov-cr-sub">${fmtC(TOTAL*RATE)}</div>
+          </div>
+        </div>
+        <!-- Progress bar -->
+        <div style="margin-top:20px">
+          <div class="track" style="margin-bottom:6px">
+            <div class="track-fill" style="width:${Math.min(100,pct)}%;background:${barColor}"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted)">
+            <span>${alloc} of ${TOTAL} credits</span>
+            <span>${TOTAL - alloc} remaining</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  renderMonthCard();
+}
+
+function renderMonthCard() {
+  const m = MONTH_NAMES[activeMonth];
+  const mp = projects.filter(p => p.month === m);
+  const ma = mp.reduce((s,p)=>s+p.credits,0), mr = TOTAL - ma;
+  const rc = mr<0?'red':mr<50?'amber':'green';
+  let h = `<div class="month-kpis">
+    <div class="month-kpi"><div class="month-kpi-label">Budget</div><div class="month-kpi-val">${TOTAL}</div></div>
+    <div class="month-kpi"><div class="month-kpi-label">Allocated</div><div class="month-kpi-val ${ma>0?'blue':''}">${ma}</div></div>
+    <div class="month-kpi"><div class="month-kpi-label">Remaining</div><div class="month-kpi-val ${rc}">${mr}</div></div>
+  </div>`;
+  if (!mp.length) {
+    h += `<div class="month-empty">No projects in ${m} yet.</div>`;
+  } else {
+    h += `<div class="month-col-hdr"><span>Project</span><span>Deliverable</span><span style="text-align:right">Credits</span><span style="text-align:right">Value</span><span style="text-align:right">Status</span><span style="text-align:right">By</span></div>`;
+    h += mp.map(p => `<div class="month-proj-row">
+      <div style="color:var(--text)">${p.name}</div>
+      <div style="font-size:12px;color:var(--sub)">${p.deliverable}</div>
+      <div style="font-family:var(--mono);font-size:12px;text-align:right">${p.credits}</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--sub);text-align:right">${fmtC(p.credits*RATE)}</div>
+      <div style="text-align:right"><span class="tag tag-${stClass(p.status)}">${p.status}</span></div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--sub);text-align:right">${p.submitter||'—'}</div>
+    </div>`).join('');
+  }
+  $('month-card').innerHTML = h;
+}
+
+function setMonth(el, i) {
+  activeMonth = i;
+  document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderMonthCard();
+}
+
+// ── RENDER PROJECTS ───────────────────────────────────────────────────────────
+function renderProjects() {
+  const wrap = $('proj-list-wrap');
+  if (!projects.length) {
+    wrap.innerHTML = `<div class="proj-empty">No projects yet — use "+ Add ask" to get started.</div>`;
+    return;
+  }
+  wrap.innerHTML = projects.map(p => `
+    <div class="proj-row">
+      <div><div class="proj-name">${p.name}</div><div class="proj-month-tag">${p.month}</div></div>
+      <div class="proj-deliv">${p.deliverable}</div>
+      <div class="proj-ws">${p.workstream}</div>
+      <div style="font-family:var(--mono);font-size:12px;text-align:right">${p.credits}</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--sub);text-align:right">${fmtC(p.credits*RATE)}</div>
+      <div><span class="tag tag-${stClass(p.status)}">${p.status}</span></div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.submitter||'—'}</div>
+      <div style="display:flex;align-items:center;gap:6px;justify-content:center;">
+        ${isAdmin ? `<span style="cursor:pointer;font-family:var(--mono);font-size:10px;color:var(--blue);opacity:0.7;" onclick="editProject(${p.id})" title="Edit">Edit</span>` : ''}
+        <span class="proj-del" onclick="delProject(${p.id})" title="Remove" style="${isAdmin?'':'pointer-events:none;opacity:0.3'}">&#215;</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── RENDER GANTT ──────────────────────────────────────────────────────────────
+function renderGantt() {
+  const el = $('gantt-wrap');
+  if (!projects.length) { el.innerHTML = `<div class="gantt-empty">No projects yet. Add some to see the timeline.</div>`; return; }
+  const TOTAL_WEEKS = 24;
+  const WEEKS_PER_MONTH = 4;
+  // Build week header: month groups on top row, week numbers on second row
+  // Month group cells
+  const monthGroupCells = MONTH_NAMES.map((m,mi) =>
+    `<div class="gantt-mgroup" style="grid-column:span 4">${m}</div>`
+  ).join('');
+  // Week number cells
+  const weekCells = Array.from({length:TOTAL_WEEKS},(_,i) =>
+    `<div class="gantt-whdr">W${i+1}</div>`
+  ).join('');
+
+  let out = `<div class="gantt-head">
+    <div class="gantt-label-cell" style="grid-row:span 2">Project</div>
+    <div class="gantt-week-grid">${monthGroupCells}</div>
+  </div>
+  <div class="gantt-head gantt-head2">
+    <div class="gantt-label-cell gantt-label-cell2"></div>
+    <div class="gantt-week-grid gantt-week-row">${weekCells}</div>
+  </div>
+  <div class="gantt-body">`;
+
+  projects.forEach(p => {
+    const mi = MONTH_NAMES.indexOf(p.month); if (mi < 0) return;
+    const startWeek = (p.startWeek !== undefined ? p.startWeek : 0);
+    const absStart = mi * WEEKS_PER_MONTH + startWeek;
+    const durWeeks = Math.max(0.5, p.durWeeks || p.dur || 2);
+    const clampedDur = Math.min(durWeeks, TOTAL_WEEKS - absStart);
+    const leftPct = (absStart / TOTAL_WEEKS * 100).toFixed(2);
+    const widthPct = Math.max(0.5, clampedDur / TOTAL_WEEKS * 100).toFixed(2);
+    const col = CAT_COLOR[p.category]||'#F0F0F2', tcol = CAT_TEXT[p.category]||'#0C0C0E';
+    const op = p.status==='Completed'?'0.35':p.status==='On hold'?'0.5':'1';
+    const pend = p.status==='Pending approval';
+    const lbl = p.name.split(' ').slice(0,4).join(' ');
+    const wkLabel = `Wk ${absStart+1}–${Math.min(TOTAL_WEEKS,absStart+Math.ceil(clampedDur))}`;
+    out += `<div class="gantt-row">
+      <div class="gantt-task">
+        <div class="gantt-task-name">${p.name}</div>
+        <div class="gantt-task-meta">${p.credits} cr &nbsp;·&nbsp; ${wkLabel}</div>
+      </div>
+      <div class="gantt-bars" style="display:grid;grid-template-columns:repeat(${TOTAL_WEEKS},1fr);position:relative;">
+        ${Array.from({length:TOTAL_WEEKS},(_,i)=>`<div class="gantt-cell ${i%4===3&&i<TOTAL_WEEKS-1?'gantt-cell-month':''}"></div>`).join('')}
+        <div class="gantt-bar-layer">
+          <div class="gantt-bar" title="${p.name} — ${p.credits} cr — ${p.status} — ${wkLabel}"
+            style="left:${leftPct}%;width:${widthPct}%;opacity:${op};${pend
+              ?`background:transparent;border:1px solid ${col};color:${col};`
+              :`background:${col};color:${tcol};`}">
+            ${parseFloat(widthPct)>5?lbl:''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+  out += '</div>';
+  const cats = [...new Set(projects.map(p=>p.category))];
+  out += `<div class="gantt-legend">
+    ${cats.map(c=>`<div class="gantt-legend-item"><div class="legend-sw" style="background:${CAT_COLOR[c]}"></div>${c}</div>`).join('')}
+    <div class="gantt-legend-item"><div class="legend-sw" style="background:transparent;border:1px solid var(--muted)"></div>Pending</div>
+  </div>`;
+  el.innerHTML = out;
+}
+
+
+// ── RENDER MENU ───────────────────────────────────────────────────────────────
+function renderMenu() {
+  $('menu-body').innerHTML = Object.entries(CATALOGUE).map(([cat,cfg]) => `
+    <div class="menu-cat">
+      <span class="menu-cat-label">${cat}</span>
+      ${cfg.items.map(d => `
+        <div class="menu-row" onclick="openModalWith('${esc(cat)}','${esc(d.name)}')">
+          <div>
+            <div class="menu-item-name">${d.name}</div>
+            <div class="menu-item-detail">${d.timeline} &nbsp;·&nbsp; ${d.revisions}</div>
+            ${d.note ? `<div class="menu-item-note">${d.note}</div>` : ''}
+          </div>
+          <div>
+            <div class="menu-cr">${d.credits}</div>
+            <div class="menu-val">${fmtC(d.value)}</div>
+          </div>
+          <div><div class="menu-add-btn">+ Add</div></div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+const esc = s => s.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function go(el, id) {
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+  if (id==='overview') renderOverview();
+  if (id==='projects') renderProjects();
+  if (id==='timeline') renderGantt();
+  if (id==='menu')     renderMenu();
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function populateCats() {
+  const s = $('f-cat'); s.innerHTML = '<option value="">— select category —</option>';
+  Object.keys(CATALOGUE).forEach(cat => {
+    const o = document.createElement('option'); o.value = o.textContent = cat; s.appendChild(o);
+  });
+}
+
+function onCatChange() {
+  const cat = $('f-cat').value, cfg = CATALOGUE[cat];
+  const ds = $('f-deliv'); ds.innerHTML = '<option value="">— select deliverable —</option>';
+  if (cfg) {
+    cfg.items.forEach(d => { const o = document.createElement('option'); o.value = o.textContent = d.name; ds.appendChild(o); });
+    if (cfg.ws) $('f-ws').value = cfg.ws;
+  }
+  $('scope-row').style.display = 'none';
+  $('complexity-row').style.display = 'none';
+  $('social-row').style.display = 'none';
+  $('addons-section').style.display = 'none';
+  $('deliv-note').style.display = 'none';
+  selectedAddons.clear();
+  updatePreview();
+}
+
+function onDelivChange() {
+  const cat = $('f-cat').value, cfg = CATALOGUE[cat], dName = $('f-deliv').value;
+  const item = getItem(cat, dName);
+  if (!item) {
+    $('scope-row').style.display = 'none';
+    $('complexity-row').style.display = 'none';
+    $('social-row').style.display = 'none';
+    $('addons-section').style.display = 'none';
+    $('deliv-note').style.display = 'none';
+    updatePreview(); return;
+  }
+  // note
+  if (item.note) { $('deliv-note').textContent = item.note; $('deliv-note').style.display = 'block'; }
+  else $('deliv-note').style.display = 'none';
+  // scope
+  const fields = [];
+  if (cfg.showFormats) fields.push(`<div><label class="field-label">Formats <span class="field-hint">1 = hero + 4 ratios</span></label><input class="field-input" id="f-formats" type="number" min="1" max="10" value="1" oninput="updatePreview()"></div>`);
+  if (cfg.showVersions) fields.push(`<div><label class="field-label">Versions / cuts</label><input class="field-input" id="f-versions" type="number" min="1" max="20" value="1" oninput="updatePreview()"></div>`);
+  if (cfg.showDuration) fields.push(`<div><label class="field-label">Duration</label><select class="field-select" id="f-dur" onchange="updatePreview()"><option value="0.5">:06s</option><option value="0.65">:15s</option><option value="1.0" selected>:30s</option><option value="1.3">:60s</option><option value="1.5">:90s</option></select></div>`);
+  if (fields.length) { $('scope-inner').innerHTML = fields.join(''); $('scope-row').style.display = 'block'; }
+  else $('scope-row').style.display = 'none';
+  // complexity
+  $('complexity-row').style.display = cfg.showComplexity ? 'block' : 'none';
+  // social add-on
+  if (cfg.showSocial) { activeSF = new Set(); ['none','cutdowns','variants','nativepack','fullsuite'].forEach(x => $('sf-'+x) && $('sf-'+x).classList.remove('sel')); $('social-row').style.display = 'block'; }
+  else $('social-row').style.display = 'none';
+  // addons
+  if (cfg.addons && cfg.addons.length) {
+    selectedAddons.clear();
+    $('addon-grid').innerHTML = cfg.addons.map(a =>
+      `<div class="addon-item" id="ao-${a.id}" onclick="toggleAddon('${a.id}')"><div class="addon-cb"><span class="addon-tick">&#10003;</span></div><div style="flex:1"><div class="addon-name">${a.name}</div><div class="addon-note">${a.note}</div></div><div class="addon-cr">+${a.cr} cr</div></div>`
+    ).join('');
+    $('addons-section').style.display = 'block';
+  } else { $('addons-section').style.display = 'none'; selectedAddons.clear(); }
+  updatePreview();
+}
+
+function toggleAddon(id) {
+  if (selectedAddons.has(id)) selectedAddons.delete(id); else selectedAddons.add(id);
+  const el = $('ao-'+id); if (el) el.classList.toggle('sel', selectedAddons.has(id));
+  updatePreview();
+}
+
+function setCT(t) {
+  activeCT = t;
+  ['templated','standard','premium'].forEach(x => $('ct-'+x).classList.toggle('sel', x===t));
+  updatePreview();
+}
+
+function setSF(t) {
+  if (activeSF.has(t)) activeSF.delete(t); else activeSF.add(t);
+  ['none','cutdowns','variants','nativepack','fullsuite'].forEach(x => $('sf-'+x) && $('sf-'+x).classList.toggle('sel', activeSF.has(x)));
+  updatePreview();
+}
+
+function setFunnel(t) {
+  activeFunnel = t;
+  ['full','mid','low'].forEach(x => $('fn-'+x).classList.toggle('sel', x===t));
+}
+function ctMult() { return {templated:0.7, standard:1.0, premium:1.3}[activeCT]||1; }
+function sfMult(base) {
+  const rates = {cutdowns:7, variants:14, nativepack:Math.round(base*0.25), fullsuite:Math.round(base*0.40)};
+  return [...activeSF].reduce((s, key) => s + (rates[key]||0), 0);
+}
+function sfLines(base) {
+  const rates = {cutdowns:7, variants:14, nativepack:Math.round(base*0.25), fullsuite:Math.round(base*0.40)};
+  const labels = {cutdowns:'Social cutdowns', variants:'Social variants', nativepack:'Native social pack', fullsuite:'Full social suite'};
+  return [...activeSF].filter(k=>k!=='none').map(k => ({name:labels[k]||k, cr:rates[k]||0}));
+}
+
+function calcCredits() {
+  const ov = parseInt($('f-override').value)||0;
+  if (ov > 0) return {total:ov, override:true};
+  const cat = $('f-cat').value, cfg = CATALOGUE[cat], dName = $('f-deliv').value;
+  const item = getItem(cat, dName);
+  if (!item) return null;
+  const fmt = parseInt($('f-formats')?.value)||1;
+  const ver = parseInt($('f-versions')?.value)||1;
+  const dm  = parseFloat($('f-dur')?.value)||1.0;
+  const ct  = cfg.showComplexity ? ctMult() : 1.0;
+  const fm  = cfg.showFormats ? fmt : 1;
+  const vm  = cfg.showVersions ? ver : 1;
+  const base = Math.round(item.credits * ct * dm * fm * vm);
+  // durWeeks adjusted by duration multiplier (longer cuts take longer)
+  const durWeeks = Math.max(0.5, Math.round(item.dur * dm * 10)/10);
+  const sfCr = cfg.showSocial ? sfMult(base) : 0;
+  let addonCr = 0, addonLines = [];
+  if (cfg.addons) cfg.addons.forEach(a => { if (selectedAddons.has(a.id)) { addonCr += a.cr; addonLines.push(a); } });
+  let total = base + sfCr + addonCr;
+  const rush = $('f-rush').value === 'yes';
+  if (rush) total = Math.round(total * 1.5);
+  const finalDurWeeks = rush ? Math.max(0.5, Math.round(durWeeks * 0.5 * 10)/10) : durWeeks;
+  return {total, item, base, ct, dm, fm, vm, sfCr, addonLines, rush, cfg, durWeeks, finalDurWeeks};
+}
+
+function updatePreview() {
+  const r = calcCredits();
+  if (!r) {
+    $('cp-credits').textContent = '—'; $('cp-val').textContent = ''; $('cp-rem').textContent = '';
+    $('cp-meta').textContent = 'Select a category and deliverable above'; $('cp-bd').style.display = 'none';
+    return;
+  }
+  const total = r.total;
+  const prev = editId ? (projects.find(p=>p.id===editId)?.credits||0) : 0;
+  const rem = TOTAL - totalUsed() + prev - total;
+  $('cp-credits').textContent = total;
+  $('cp-credits').className = 'cp-credits' + (rem<0?' over':'');
+  $('cp-val').textContent = fmtC(total*RATE);
+  $('cp-rem').textContent = rem>=0 ? rem+' credits remaining after' : Math.abs(rem)+' over budget';
+  $('cp-rem').className = 'cp-rem'+(rem<0?' over':rem<50?' warn':'');
+  if (r.override) { $('cp-meta').textContent = 'Custom override'; $('cp-bd').style.display = 'none'; return; }
+  const {item,base,ct,dm,fm,vm,sfCr,addonLines} = r;
+  const dispTimeline = r.rush
+    ? (() => { const w=r.finalDurWeeks; return w<1?Math.round(w*5)+' days':w<=1?'~1 week':Math.ceil(w)+' weeks'; })() + ' (rushed)'
+    : item.timeline;
+  $('cp-meta').textContent = dispTimeline + ' · ' + item.revisions;
+  const lines = [];
+  // Base line — show full base credits and full dollar value
+  const baseCr = item.credits;
+  const baseDollar = fmtC(baseCr * RATE);
+  lines.push(`<div class="bd-row"><span>${item.name}</span><span>${baseCr} cr &nbsp;·&nbsp; ${baseDollar}</span></div>`);
+  // Format / version multipliers
+  if (fm > 1) lines.push(`<div class="bd-row"><span>&times;${fm} formats</span><span></span></div>`);
+  if (vm > 1) lines.push(`<div class="bd-row"><span>&times;${vm} versions</span><span></span></div>`);
+  // Duration
+  if (dm !== 1.0) {
+    const durLabel = {0.5:':06s',0.65:':15s',1.0:':30s',1.3:':60s',1.5:':90s'}[dm]||'';
+    lines.push(`<div class="bd-row"><span>Duration (${durLabel})</span><span>&times;${dm}</span></div>`);
+  }
+  // Complexity tier — show the dollar saving/addition clearly
+  if (ct !== 1.0) {
+    const baseBeforeCT = Math.round(baseCr * dm * fm * vm);
+    const afterCT = Math.round(baseBeforeCT * ct);
+    const diff = afterCT - baseBeforeCT;
+    const diffDollar = fmtC(Math.abs(diff) * RATE);
+    const sign = diff < 0 ? '−' : '+';
+    const pct = ct < 1 ? Math.round((1-ct)*100) : Math.round((ct-1)*100);
+    lines.push(`<div class="bd-row" style="color:${ct<1?'var(--green)':ct>1?'var(--amber)':'var(--sub)'}"><span>${activeCT === 'templated' ? 'Templated (−'+pct+'%)' : activeCT === 'premium' ? 'Premium (+'+pct+'%)' : 'Standard'}</span><span>${sign}${Math.abs(diff)} cr &nbsp;·&nbsp; ${sign}${diffDollar}</span></div>`);
+  }
+  // Social add-ons (multi-select)
+  if (sfCr > 0) {
+    sfLines(base).forEach(l => {
+      lines.push(`<div class="bd-row"><span>+ ${l.name}</span><span>+${l.cr} cr &nbsp;·&nbsp; +${fmtC(l.cr*RATE)}</span></div>`);
+    });
+  }
+  // Per-item add-ons
+  addonLines.forEach(a => lines.push(`<div class="bd-row"><span>+ ${a.name}</span><span>+${a.cr} cr &nbsp;·&nbsp; +${fmtC(a.cr*RATE)}</span></div>`));
+  // Rush
+  if (r.rush) {
+    const preRush = Math.round(total / 1.5);
+    const origWeeks = r.durWeeks;
+    const compWeeks = r.finalDurWeeks;
+    // Format weeks as a readable label
+    const fmtWks = w => w < 1 ? Math.round(w*5)+' days' : w === 1 ? '1 week' : w % 1 === 0 ? w+' weeks' : Math.ceil(w)+' weeks';
+    lines.push(`<div class="bd-row" style="color:var(--amber)"><span>Rush &times;1.5 &nbsp;·&nbsp; ${fmtWks(origWeeks)} &rarr; ${fmtWks(compWeeks)}</span><span>+${total - preRush} cr</span></div>`);
+  }
+  // Total
+  lines.push(`<div class="bd-row tot"><span>Total</span><span>${total} cr &nbsp;·&nbsp; ${fmtC(total*RATE)}</span></div>`);
+  $('cp-bd').innerHTML = lines.join(''); $('cp-bd').style.display = 'block';
+}
+
+function onRushChange() { $('rush-note').style.display = $('f-rush').value==='yes' ? 'block' : 'none'; updatePreview(); }
+
+function openModal() {
+  editId = null; activeCT = 'standard'; activeSF = 'none'; selectedAddons.clear();
+  $('modal-title').textContent = 'Add a new ask'; $('save-btn').textContent = 'Add to log';
+  $('f-name').value = ''; $('f-submitter').value = ''; $('f-override').value = ''; $('f-rush').value = 'no'; $('f-status').value = 'Active'; $('f-startweek') && ($('f-startweek').value = '0');
+  $('rush-note').style.display = 'none';
+  ['f-name','f-cat','f-deliv'].forEach(id => $(id) && $(id).classList.remove('err-field'));
+  $('scope-row').style.display = 'none'; $('complexity-row').style.display = 'none';
+  $('social-row').style.display = 'none'; $('addons-section').style.display = 'none';
+  $('deliv-note').style.display = 'none';
+  ['templated','standard','premium'].forEach(x => $('ct-'+x).classList.toggle('sel', x==='standard'));
+  $('cp-credits').textContent = '—'; $('cp-val').textContent = ''; $('cp-rem').textContent = '';
+  $('cp-meta').textContent = 'Select a category and deliverable above'; $('cp-bd').style.display = 'none';
+  populateCats(); $('f-deliv').innerHTML = '<option value="">— select deliverable —</option>';
+  $('modal-bg').classList.add('open');
+}
+
+function openModalWith(cat, dName) {
+  openModal();
+  $('f-cat').value = cat; onCatChange();
+  $('f-deliv').value = dName; onDelivChange();
+}
+
+function closeModal() { $('modal-bg').classList.remove('open'); }
+function bgClick(e) { if (e.target === $('modal-bg')) closeModal(); }
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+
+function saveProject() {
+  const name = $('f-name').value.trim(), cat = $('f-cat').value, dName = $('f-deliv').value;
+  let ok = true;
+  if (!name) { $('f-name').classList.add('err-field'); ok = false; } else $('f-name').classList.remove('err-field');
+  if (!cat)  { $('f-cat').classList.add('err-field');  ok = false; } else $('f-cat').classList.remove('err-field');
+  if (!dName){ $('f-deliv').classList.add('err-field');ok = false; } else $('f-deliv').classList.remove('err-field');
+  if (!ok) return;
+  const r = calcCredits();
+  const item = getItem(cat, dName);
+  const cr = r ? r.total : 0;
+  const startWeek = parseInt($('f-startweek').value)||0;
+  const durWeeks = r && r.finalDurWeeks ? r.finalDurWeeks : (r && r.durWeeks ? r.durWeeks : (item ? item.dur : 2));
+  const p = {
+    id: editId||nextId++, name, deliverable:dName, category:cat,
+    workstream: $('f-ws').value, month: $('f-month').value,
+    status: $('f-status').value, credits:cr, dur:durWeeks,
+    submitter: $('f-submitter').value.trim() || '—',
+    durWeeks:durWeeks, startWeek:startWeek, funnel:activeFunnel
+  };
+  if (editId) { const i = projects.findIndex(x=>x.id===editId); projects[i]=p; }
+  else projects.push(p);
+  closeModal(); renderAll();
+}
+
+function editProject(id) {
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  editId = id;
+  openModal();
+  // Re-populate with existing values
+  $('f-name').value = p.name;
+  $('f-submitter').value = p.submitter || '';
+  $('f-ws').value = p.workstream;
+  $('f-month').value = p.month;
+  $('f-status').value = p.status;
+  $('f-startweek') && ($('f-startweek').value = p.startWeek || 0);
+  $('f-cat').value = p.category; onCatChange();
+  $('f-deliv').value = p.deliverable; onDelivChange();
+  $('modal-title').textContent = 'Edit ask';
+  $('save-btn').textContent = 'Save changes';
+}
+
+function delProject(id) {
+  if (!confirm('Remove this project?')) return;
+  projects = projects.filter(p=>p.id!==id); renderAll();
+}
+
+
+// ── ADMIN STATE ───────────────────────────────────────────────────────────────
+let ADMIN_PIN = '1234';
+let isAdmin = false;
+
+// ── SETTINGS STATE (overrideable) ─────────────────────────────────────────────
+let settings = {
+  client:  'SVEDKA',
+  tier:    'MOMENTUM',
+  credits: 444,
+  rate:    112.50,
+  monthly: 50000,
+};
+
+// Override globals from settings
+function applySettings() {
+  // These shadow the consts — we patch the live values
+  window._TOTAL   = settings.credits;
+  window._RATE    = settings.rate;
+  // Update topbar display
+  const pill = $('tier-pill-display');
+  if (pill) pill.innerHTML = `${settings.tier} &nbsp;·&nbsp; <b>${settings.credits} cr / mo</b> &nbsp;·&nbsp; <b>$${Math.round(settings.monthly).toLocaleString()}</b>`;
+  const label = document.querySelector('.client-label');
+  if (label) label.textContent = settings.client;
+}
+
+// Patch fmtC and totalUsed to respect live settings
+const _origFmtC = fmtC;
+// We'll just patch TOTAL and RATE via globals
+function liveTotal() { return window._TOTAL || TOTAL; }
+function liveRate()  { return window._RATE  || RATE; }
+
+// ── PIN ───────────────────────────────────────────────────────────────────────
+function openPin() {
+  if (isAdmin) { lockAdmin(); return; }
+  $('pin-input').value = '';
+  $('pin-error').textContent = '';
+  $('pin-input').classList.remove('err');
+  $('pin-overlay').classList.add('open');
+  setTimeout(() => $('pin-input').focus(), 100);
+}
+
+function checkPin() {
+  const val = $('pin-input').value;
+  if (val.length < 4) return;
+  if (val === ADMIN_PIN) {
+    $('pin-overlay').classList.remove('open');
+    unlockAdmin();
+  } else if (val.length >= ADMIN_PIN.length) {
+    $('pin-input').classList.add('err');
+    $('pin-error').textContent = 'Incorrect PIN';
+    setTimeout(() => {
+      $('pin-input').classList.remove('err');
+      $('pin-input').value = '';
+      $('pin-error').textContent = '';
+    }, 800);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('pin-overlay').classList.contains('open')) {
+    $('pin-overlay').classList.remove('open');
+  }
+});
+
+function unlockAdmin() {
+  isAdmin = true;
+  document.body.classList.add('admin-mode');
+  $('admin-bar').classList.add('visible');
+  $('admin-lock-btn').textContent = 'Lock';
+  $('admin-lock-btn').style.color = 'var(--blue)';
+  $('admin-lock-btn').style.borderColor = 'rgba(46,91,255,0.3)';
+  renderAll();
+}
+
+function lockAdmin() {
+  isAdmin = false;
+  document.body.classList.remove('admin-mode');
+  $('admin-bar').classList.remove('visible');
+  $('admin-lock-btn').textContent = '•••';
+  $('admin-lock-btn').style.color = '';
+  $('admin-lock-btn').style.borderColor = '';
+  // If on settings tab, go back to overview
+  if (document.getElementById('panel-settings').classList.contains('active')) {
+    go(document.querySelector('.nav-tab'), 'overview');
+  }
+  renderAll();
+}
+
+function clearAllProjects() {
+  if (!confirm('Remove all projects? This cannot be undone.')) return;
+  projects = []; renderAll();
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function renderSettings() {
+  $('s-client').value  = settings.client;
+  $('s-tier').value    = settings.tier;
+  $('s-credits').value = settings.credits;
+  $('s-rate').value    = settings.rate;
+  $('s-monthly').value = settings.monthly;
+  renderDeliverableEditor();
+}
+
+function saveSettings() {
+  settings.client  = $('s-client').value.trim() || settings.client;
+  settings.tier    = $('s-tier').value.trim()   || settings.tier;
+  settings.credits = parseFloat($('s-credits').value) || settings.credits;
+  settings.rate    = parseFloat($('s-rate').value)    || settings.rate;
+  settings.monthly = parseFloat($('s-monthly').value) || settings.monthly;
+
+  // Save deliverable edits
+  Object.entries(CATALOGUE).forEach(([cat, cfg]) => {
+    cfg.items.forEach(item => {
+      const id = 'de-' + slugify(cat + item.name);
+      const inp = $(id);
+      if (inp) {
+        const val = parseInt(inp.value);
+        if (!isNaN(val) && val > 0) item.credits = val;
+      }
+    });
+  });
+
+  // PIN change
+  const newPin = $('s-pin-new').value.trim();
+  const confirmPin = $('s-pin-confirm').value.trim();
+  if (newPin) {
+    if (newPin === confirmPin && newPin.length >= 4) {
+      ADMIN_PIN = newPin;
+      $('s-pin-new').value = ''; $('s-pin-confirm').value = '';
+      alert('PIN updated.');
+    } else {
+      alert('PINs do not match or are too short (min 4 digits).');
+      return;
+    }
+  }
+
+  applySettings();
+  renderAll();
+  // Flash confirm
+  const btn = document.querySelector('#panel-settings .btn-primary');
+  const orig = btn.textContent; btn.textContent = 'Saved ✓';
+  setTimeout(() => btn.textContent = orig, 1500);
+}
+
+function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9]/g, '-'); }
+
+function renderDeliverableEditor() {
+  const el = $('deliverable-edit-table');
+  let html = `<div class="de-hdr"><span>Deliverable</span><span style="text-align:right">Credits</span><span style="text-align:right">Value</span></div>`;
+  Object.entries(CATALOGUE).forEach(([cat, cfg]) => {
+    cfg.items.forEach(item => {
+      const id = 'de-' + slugify(cat + item.name);
+      html += `<div class="de-row">
+        <div><div class="de-name">${item.name}</div><div class="de-cat">${cat}</div></div>
+        <div><input class="de-input" id="${id}" type="number" value="${item.credits}" oninput="updateDeVal('${id}',${id.replace(/[^a-z0-9-]/g,'')})"></div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--sub);text-align:right;padding-right:4px" id="${id}-val">$${Math.round(item.credits * settings.rate).toLocaleString()}</div>
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+  // Wire up live value display
+  Object.entries(CATALOGUE).forEach(([cat, cfg]) => {
+    cfg.items.forEach(item => {
+      const id = 'de-' + slugify(cat + item.name);
+      const inp = $(id);
+      if (inp) inp.oninput = () => {
+        const v = parseInt(inp.value)||0;
+        $(id+'-val').textContent = '$' + Math.round(v * settings.rate).toLocaleString();
+      };
+    });
+  });
+}
+
+// ── PATCH go() TO HANDLE SETTINGS ────────────────────────────────────────────
+const _origGo = go;
+go = function(el, id) {
+  _origGo(el, id);
+  if (id === 'settings') renderSettings();
+};
+
+
+function renderAll() { renderOverview(); renderProjects(); renderGantt(); renderMenu(); }
+applySettings();
+renderAll();
+</script>
+</body>
+</html>
